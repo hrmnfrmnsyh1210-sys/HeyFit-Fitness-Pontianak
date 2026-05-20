@@ -8,14 +8,23 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx server/database/seed.ts"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.2",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
     "nuxt": "^3.15.0",
+    "tsx": "^4.22.3",
     "vue-tsc": "^2.1.10"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.22.3",
+    "nuxt-auth-utils": "^0.5.29",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   }

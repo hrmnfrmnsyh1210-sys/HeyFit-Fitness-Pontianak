@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth', roles: ['admin', 'owner'] })
 useHead({ title: 'Admin — Heyfit' })
 
 const stats = [

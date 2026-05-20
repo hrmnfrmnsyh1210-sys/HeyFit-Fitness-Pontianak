@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth', roles: ['owner'] })
 useHead({ title: 'Owner Dashboard — Heyfit' })
 
 const kpis = [

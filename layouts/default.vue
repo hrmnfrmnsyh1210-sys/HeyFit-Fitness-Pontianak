@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { loggedIn, user, clear: clearSession } = useUserSession()
+
 const memberLinks = [
   { to: '/', label: 'Home' },
   { to: '/kelas', label: 'Kelas' },
@@ -6,16 +8,31 @@ const memberLinks = [
   { to: '/keanggotaan/daftar', label: 'Daftar Member' },
 ]
 
-const staffLinks = [
-  { to: '/admin', label: 'Admin' },
-  { to: '/owner', label: 'Owner' },
-]
+// Link staff tampil sesuai role: owner melihat semua, admin melihat Admin.
+const staffLinks = computed(() => {
+  const role = user.value?.role
+  const links: { to: string, label: string }[] = []
+  if (role === 'admin' || role === 'owner') links.push({ to: '/admin', label: 'Admin' })
+  if (role === 'owner') links.push({ to: '/owner', label: 'Owner' })
+  return links
+})
+
+const roleLabel: Record<string, string> = {
+  member: 'Member',
+  admin: 'Admin',
+  owner: 'Owner',
+}
 
 const mobileOpen = ref(false)
 const route = useRoute()
 watch(() => route.fullPath, () => {
   mobileOpen.value = false
 })
+
+async function handleLogout() {
+  await clearSession()
+  await navigateTo('/login')
+}
 </script>
 
 <template>
@@ -53,7 +70,8 @@ watch(() => route.fullPath, () => {
         </nav>
 
         <div class="ml-auto flex items-center gap-2">
-          <nav class="hidden lg:flex items-center gap-1 text-xs mr-2">
+          <!-- staff links -->
+          <nav v-if="staffLinks.length" class="hidden lg:flex items-center gap-1 text-xs mr-1">
             <NuxtLink
               v-for="link in staffLinks"
               :key="link.to"
@@ -64,10 +82,33 @@ watch(() => route.fullPath, () => {
               {{ link.label }}
             </NuxtLink>
           </nav>
-          <NuxtLink to="/keanggotaan/daftar" class="hidden sm:inline-flex btn-primary">
-            Join Now
-            <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg>
-          </NuxtLink>
+
+          <!-- logged in -->
+          <template v-if="loggedIn && user">
+            <div class="hidden sm:flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-3">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-700 text-ink-950 text-xs font-bold">
+                {{ user.nama.charAt(0).toUpperCase() }}
+              </span>
+              <span class="text-xs">
+                <span class="text-white font-semibold">{{ user.nama.split(' ')[0] }}</span>
+                <span class="text-slate-500"> · {{ roleLabel[user.role] }}</span>
+              </span>
+            </div>
+            <button class="btn-ghost !py-2 !px-3.5 text-xs" @click="handleLogout">
+              Keluar
+            </button>
+          </template>
+
+          <!-- logged out -->
+          <template v-else>
+            <NuxtLink to="/login" class="hidden sm:inline-flex btn-ghost !py-2 !px-4 text-xs">
+              Masuk
+            </NuxtLink>
+            <NuxtLink to="/register" class="hidden sm:inline-flex btn-primary !py-2">
+              Join Now
+              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg>
+            </NuxtLink>
+          </template>
 
           <button
             class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-white/10 text-slate-200"
@@ -98,7 +139,8 @@ watch(() => route.fullPath, () => {
             >
               {{ link.label }}
             </NuxtLink>
-            <div class="pt-3 mt-3 border-t border-white/[0.06]">
+
+            <div v-if="staffLinks.length" class="pt-3 mt-3 border-t border-white/[0.06]">
               <p class="px-3 py-1 text-[10px] uppercase tracking-widest text-slate-500">Staff</p>
               <NuxtLink
                 v-for="link in staffLinks"
@@ -109,6 +151,28 @@ watch(() => route.fullPath, () => {
               >
                 {{ link.label }}
               </NuxtLink>
+            </div>
+
+            <div class="pt-3 mt-3 border-t border-white/[0.06]">
+              <template v-if="loggedIn && user">
+                <p class="px-3 py-1 text-xs text-slate-400">
+                  Masuk sebagai <span class="text-white font-semibold">{{ user.nama }}</span> ({{ roleLabel[user.role] }})
+                </p>
+                <button
+                  class="w-full text-left px-3 py-2 rounded-lg text-rose-300 hover:bg-white/[0.04]"
+                  @click="handleLogout"
+                >
+                  Keluar
+                </button>
+              </template>
+              <template v-else>
+                <NuxtLink to="/login" class="block px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.04]">
+                  Masuk
+                </NuxtLink>
+                <NuxtLink to="/register" class="block px-3 py-2 rounded-lg text-brand-300 font-semibold hover:bg-white/[0.04]">
+                  Daftar Member
+                </NuxtLink>
+              </template>
             </div>
           </div>
         </div>
