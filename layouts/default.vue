@@ -45,16 +45,18 @@ async function handleLogout() {
       <div class="absolute inset-0 grid-bg opacity-[0.4]" />
       <div class="absolute inset-0 bg-grid-fade" />
       <div class="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[900px] rounded-full bg-brand-500/15 blur-3xl" />
+      <div class="absolute top-1/3 -right-32 h-[420px] w-[420px] rounded-full bg-accent-500/10 blur-3xl" />
     </div>
 
     <!-- header -->
     <header class="sticky top-0 z-40 border-b border-white/[0.06] bg-ink-950/70 backdrop-blur-xl">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-6">
-        <NuxtLink to="/" class="flex items-center gap-2 group">
-          <span class="relative inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-400 text-ink-950 font-display font-extrabold shadow-glow">
-            H
-            <span class="absolute inset-0 rounded-lg ring-1 ring-brand-300/50 group-hover:ring-brand-300" />
-          </span>
+        <NuxtLink to="/" class="flex items-center gap-2.5 group">
+          <img
+            src="/logo.png"
+            alt="Heyfit Fitness"
+            class="h-10 w-10 object-contain transition-transform duration-200 group-hover:scale-105 drop-shadow-[0_0_14px_rgba(34,211,238,0.4)]"
+          >
           <span class="font-display text-lg font-extrabold tracking-tight text-white">
             Hey<span class="text-brand-400">fit</span>
           </span>
@@ -200,11 +202,11 @@ async function handleLogout() {
     <footer class="mt-24 border-t border-white/[0.06] bg-ink-950/40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid gap-8 md:grid-cols-3 text-sm">
         <div>
-          <div class="flex items-center gap-2 mb-3">
-            <span class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-brand-400 text-ink-950 font-display font-extrabold">H</span>
-            <span class="font-display text-base font-extrabold text-white">Hey<span class="text-brand-400">fit</span></span>
+          <div class="flex items-center gap-2.5 mb-3">
+            <img src="/logo.png" alt="Heyfit Fitness" class="h-9 w-9 object-contain">
+            <span class="font-display text-base font-extrabold text-white">Hey<span class="text-brand-400">fit</span> <span class="text-accent-300">Fitness</span></span>
           </div>
-          <p class="text-slate-500 max-w-xs">Train hard. Recover smart. Komunitas fitness modern dengan kelas dan fasilitas lengkap.</p>
+          <p class="text-slate-500 max-w-xs">Train hard. Recover smart. Komunitas fitness modern dengan kelas dan fasilitas lengkap di Pontianak.</p>
         </div>
         <div>
           <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">Eksplor</p>
@@ -219,7 +221,18 @@ async function handleLogout() {
           <ul class="space-y-2 text-slate-400">
             <li>halo@heyfit.id</li>
             <li>+62 812-3456-7890</li>
-            <li>Jakarta · Bandung · Surabaya</li>
+            <li>Pontianak, Kalimantan Barat</li>
+            <li>
+              <a
+                href="https://www.instagram.com/heyfitness.pontianak/"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-1.5 hover:text-brand-300 transition"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 2.7.27.27 2.69.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zM12 16a4 4 0 110-8 4 4 0 010 8zm6.41-10.85a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z"/></svg>
+                @heyfitness.pontianak
+              </a>
+            </li>
           </ul>
         </div>
       </div>

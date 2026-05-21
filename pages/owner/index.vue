@@ -13,9 +13,9 @@ const revenueBars = [42, 55, 48, 70, 65, 82, 90, 78, 95, 88, 100, 92]
 const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
 
 const cabang = [
-  { kota: 'Jakarta', member: 2840, occ: 82, color: 'bg-brand-400' },
-  { kota: 'Bandung', member: 1420, occ: 71, color: 'bg-sky-400' },
-  { kota: 'Surabaya', member: 924, occ: 64, color: 'bg-rose-400' },
+  { kota: 'Pontianak Kota', member: 2840, occ: 82, color: 'bg-brand-400' },
+  { kota: 'Pontianak Selatan', member: 1420, occ: 71, color: 'bg-accent-400' },
+  { kota: 'Sungai Raya', member: 924, occ: 64, color: 'bg-rose-400' },
 ]
 </script>
 
@@ -97,7 +97,7 @@ const cabang = [
 
         <div class="mt-6 rounded-xl bg-brand-400/5 border border-brand-400/20 p-4">
           <p class="text-xs uppercase tracking-widest text-brand-300 mb-1">Insight</p>
-          <p class="text-sm text-slate-300">Cabang Jakarta memimpin dengan margin 34%. Pertimbangkan ekspansi ke Tangerang Q4.</p>
+          <p class="text-sm text-slate-300">Cabang Pontianak Kota memimpin dengan margin 34%. Pertimbangkan ekspansi ke Singkawang Q4.</p>
         </div>
       </div>
     </div>

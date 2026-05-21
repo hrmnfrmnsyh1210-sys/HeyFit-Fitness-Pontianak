@@ -55,7 +55,7 @@ const featuredKelas = [
         <div class="lg:col-span-7">
           <div class="chip-accent mb-5">
             <span class="glow-dot" />
-            Now open · Heyfit Jakarta Selatan
+            Now open · Heyfit Pontianak
           </div>
           <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] text-white">
             Train Hard.<br>
@@ -79,14 +79,15 @@ const featuredKelas = [
             <div class="flex -space-x-2">
               <div v-for="i in 4" :key="i" class="h-7 w-7 rounded-full border-2 border-ink-950 bg-gradient-to-br from-brand-400 to-brand-700" />
             </div>
-            <p>Dipercaya <span class="text-slate-200 font-semibold">5.000+ member</span> di 3 kota</p>
+            <p>Dipercaya <span class="text-slate-200 font-semibold">5.000+ member</span> di Pontianak</p>
           </div>
         </div>
 
         <!-- visual side -->
         <div class="lg:col-span-5 relative">
           <div class="relative aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-ink-800 to-ink-950">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(163,230,53,0.35),transparent_55%)]" />
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(34,211,238,0.4),transparent_55%)]" />
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_90%,rgba(34,211,238,0.22),transparent_55%)]" />
             <div class="absolute inset-0 bg-noise opacity-[0.04] mix-blend-overlay" />
 
             <!-- floating cards -->
@@ -178,7 +179,7 @@ const featuredKelas = [
         >
           <div class="relative aspect-[5/3] bg-gradient-to-br from-brand-500/30 via-brand-700/20 to-ink-900 overflow-hidden">
             <div class="absolute inset-0 bg-noise opacity-[0.05] mix-blend-overlay" />
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(163,230,53,0.4),transparent_60%)]" />
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(34,211,238,0.38),transparent_60%)]" />
             <span class="absolute top-3 left-3 chip-accent">{{ k.tag }}</span>
           </div>
           <div class="p-5">

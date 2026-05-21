@@ -13,18 +13,33 @@ export default {
         display: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
       },
       colors: {
+        // brand = cyan dingin — warna DOMINAN UI (tombol, link, glow, gradient)
         brand: {
-          50:  '#f7fee7',
-          100: '#ecfccb',
-          200: '#d9f99d',
-          300: '#bef264',
-          400: '#a3e635',
-          500: '#84cc16',
-          600: '#65a30d',
-          700: '#4d7c0f',
-          800: '#3f6212',
-          900: '#365314',
-          950: '#1a2e05',
+          50:  '#ecfeff',
+          100: '#cffafe',
+          200: '#a5f3fc',
+          300: '#67e8f9',
+          400: '#22d3ee',
+          500: '#06b6d4',
+          600: '#0891b2',
+          700: '#0e7490',
+          800: '#155e75',
+          900: '#164e63',
+          950: '#083344',
+        },
+        // accent = oranye hangat — aksen sekunder (badge, eyebrow, highlight)
+        accent: {
+          50:  '#fff8ed',
+          100: '#ffeccb',
+          200: '#ffd591',
+          300: '#ffb84d',
+          400: '#fb9a16',
+          500: '#ec8009',
+          600: '#c4600a',
+          700: '#9c490e',
+          800: '#7e3b11',
+          900: '#683210',
+          950: '#3b1905',
         },
         ink: {
           950: '#05060a',
@@ -36,12 +51,13 @@ export default {
         },
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(163, 230, 53, 0.25), 0 0 40px -10px rgba(163, 230, 53, 0.45)',
-        'glow-lg': '0 0 0 1px rgba(163, 230, 53, 0.3), 0 0 80px -10px rgba(163, 230, 53, 0.6)',
+        glow: '0 0 0 1px rgba(34, 211, 238, 0.25), 0 0 40px -10px rgba(34, 211, 238, 0.45)',
+        'glow-lg': '0 0 0 1px rgba(34, 211, 238, 0.3), 0 0 80px -10px rgba(34, 211, 238, 0.6)',
+        'glow-warm': '0 0 0 1px rgba(251, 154, 22, 0.25), 0 0 40px -10px rgba(251, 154, 22, 0.45)',
       },
       backgroundImage: {
         'grid-fade':
-          'radial-gradient(ellipse at top, rgba(163, 230, 53, 0.12), transparent 60%), linear-gradient(to bottom, transparent, #05060a)',
+          'radial-gradient(ellipse at top, rgba(34, 211, 238, 0.12), transparent 60%), linear-gradient(to bottom, transparent, #05060a)',
         'noise':
           "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E\")",
       },

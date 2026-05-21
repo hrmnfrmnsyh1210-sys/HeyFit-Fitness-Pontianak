@@ -42,7 +42,7 @@ async function handleLogout() {
     <!-- brand -->
     <div class="h-16 flex items-center px-5 border-b border-white/[0.06] shrink-0">
       <NuxtLink to="/admin" class="flex items-center gap-2">
-        <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-400 text-ink-950 font-display font-extrabold shadow-glow">H</span>
+        <img src="/logo.png" alt="Heyfit Fitness" class="h-9 w-9 object-contain">
         <span class="font-display text-lg font-extrabold tracking-tight text-white">
           Hey<span class="text-brand-400">fit</span>
         </span>

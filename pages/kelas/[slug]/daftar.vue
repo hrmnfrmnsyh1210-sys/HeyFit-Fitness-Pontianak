@@ -58,7 +58,7 @@ function handleSubmit() {
                 <span
                   :class="[
                     'h-4 w-4 rounded-full border-2',
-                    sesi === s.id ? 'border-brand-400 bg-brand-400 shadow-[0_0_8px_2px_rgba(163,230,53,0.6)]' : 'border-white/30',
+                    sesi === s.id ? 'border-brand-400 bg-brand-400 shadow-[0_0_8px_2px_rgba(34,211,238,0.6)]' : 'border-white/30',
                   ]"
                 />
                 <span class="font-medium text-white">{{ s.label }}</span>

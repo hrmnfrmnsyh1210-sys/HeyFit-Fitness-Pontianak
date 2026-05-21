@@ -26,10 +26,12 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Heyfit Fitness — keanggotaan, kelas, dan fasilitas gym modern' },
+        { name: 'description', content: 'Heyfit Fitness Pontianak — keanggotaan, kelas, dan fasilitas gym modern' },
         { name: 'theme-color', content: '#05060a' },
       ],
       link: [
+        { rel: 'icon', type: 'image/png', href: '/logo.png' },
+        { rel: 'apple-touch-icon', href: '/logo.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

@@ -34,7 +34,7 @@ watch(() => route.fullPath, () => {
         </svg>
       </button>
       <NuxtLink to="/admin" class="flex items-center gap-2">
-        <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-400 text-ink-950 font-display font-extrabold">H</span>
+        <img src="/logo.png" alt="Heyfit Fitness" class="h-8 w-8 object-contain">
         <span class="font-display text-base font-extrabold text-white">Hey<span class="text-brand-400">fit</span></span>
       </NuxtLink>
       <span class="chip ml-auto">Admin Console</span>

@@ -38,7 +38,7 @@ async function handleRegister() {
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
         <NuxtLink to="/" class="inline-flex items-center gap-2 mb-6">
-          <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-400 text-ink-950 font-display font-extrabold shadow-glow">H</span>
+          <img src="/logo.png" alt="Heyfit Fitness" class="h-11 w-11 object-contain">
           <span class="font-display text-xl font-extrabold text-white">Hey<span class="text-brand-400">fit</span></span>
         </NuxtLink>
         <h1 class="font-display text-3xl font-extrabold text-white">Buat akun member</h1>
