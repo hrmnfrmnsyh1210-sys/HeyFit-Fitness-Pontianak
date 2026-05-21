@@ -78,6 +78,12 @@ const recent = [
       <div class="card p-6">
         <h2 class="font-display text-lg font-bold text-white mb-4">Aksi Cepat</h2>
         <div class="space-y-2">
+          <NuxtLink to="/admin/scan" class="block rounded-xl border border-brand-400/30 bg-brand-400/[0.06] hover:border-brand-400/60 p-4 transition">
+            <p class="text-sm font-semibold text-white flex items-center gap-2">
+              <span>📷</span> Scan QR Member
+            </p>
+            <p class="text-xs text-slate-400 mt-0.5">Catat kehadiran member lewat scan QR.</p>
+          </NuxtLink>
           <button class="w-full text-left rounded-xl border border-white/[0.06] hover:border-brand-400/40 hover:bg-white/[0.03] p-4 transition group">
             <p class="text-sm font-semibold text-white">Manajemen Member</p>
             <p class="text-xs text-slate-500 mt-0.5">Lihat, edit, dan suspend member.</p>

@@ -2,8 +2,13 @@ import { drizzle } from 'drizzle-orm/mysql2'
 import mysql from 'mysql2/promise'
 import * as schema from '../database/schema'
 
+/** Bungkus pembuatan drizzle agar tipe `db` cocok persis dengan hasil panggilan. */
+function createDb(connectionPool: mysql.Pool) {
+  return drizzle(connectionPool, { schema, mode: 'default' })
+}
+
 let pool: mysql.Pool | null = null
-let db: ReturnType<typeof drizzle<typeof schema>> | null = null
+let db: ReturnType<typeof createDb> | null = null
 
 /**
  * Koneksi ke TiDB Cloud (MySQL-compatible).
@@ -34,6 +39,6 @@ export function useDb() {
     enableKeepAlive: true,
   })
 
-  db = drizzle(pool, { schema, mode: 'default' })
+  db = createDb(pool)
   return db
 }

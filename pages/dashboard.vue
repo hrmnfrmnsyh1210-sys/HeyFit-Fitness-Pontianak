@@ -16,6 +16,7 @@ const roleLabel: Record<string, string> = {
 
 const membership = computed(() => data.value?.membership ?? null)
 const profil = computed(() => data.value?.user ?? null)
+const qr = computed(() => data.value?.qr ?? null)
 
 function formatTanggal(str: string) {
   return new Date(str).toLocaleDateString('id-ID', {
@@ -168,6 +169,24 @@ const jadwalContoh = [
           <NuxtLink to="/fasilitas" class="block rounded-xl border border-white/[0.06] hover:border-brand-400/40 hover:bg-white/[0.03] p-3 text-sm text-white transition">
             Lihat fasilitas
           </NuxtLink>
+        </div>
+
+        <!-- QR CHECK-IN -->
+        <div class="pt-4 mt-4 border-t border-white/[0.06]">
+          <div class="flex items-center justify-between mb-1">
+            <p class="text-sm font-semibold text-white">QR Check-in</p>
+            <span class="chip-accent">Scan di gym</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">
+            Tunjukkan QR ini ke admin untuk mencatat kehadiranmu.
+          </p>
+          <div v-if="pending" class="aspect-square rounded-2xl bg-white/5 animate-pulse" />
+          <div v-else-if="qr" class="rounded-2xl bg-white p-3">
+            <img :src="qr.image" alt="QR check-in member" class="w-full h-auto" width="320" height="320">
+          </div>
+          <p v-if="qr" class="mt-2 text-center font-mono text-[11px] tracking-wider text-slate-500 break-all">
+            {{ qr.token }}
+          </p>
         </div>
       </div>
     </div>

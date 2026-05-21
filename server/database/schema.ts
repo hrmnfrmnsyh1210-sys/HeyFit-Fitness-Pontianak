@@ -13,6 +13,9 @@ export const users = mysqlTable('users', {
   email: varchar('email', { length: 191 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role: mysqlEnum('role', ['member', 'admin', 'owner']).notNull().default('member'),
+  // Token unik untuk QR code member. Nullable supaya baris lama tetap valid;
+  // di-backfill otomatis saat member membuka dashboard.
+  qrToken: varchar('qr_token', { length: 64 }).unique(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
@@ -34,6 +37,19 @@ export const memberships = mysqlTable('memberships', {
   updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow(),
 })
 
+/**
+ * Tabel attendances — log kehadiran member.
+ * Satu baris dibuat tiap kali admin men-scan QR member (check-in).
+ * Relasi ke users dijaga di level aplikasi.
+ */
+export const attendances = mysqlTable('attendances', {
+  id: int('id').autoincrement().primaryKey(),
+  userId: int('user_id').notNull(),
+  // id admin/owner yang melakukan scan (untuk audit).
+  scannedBy: int('scanned_by'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Role = User['role']
@@ -41,3 +57,6 @@ export type Role = User['role']
 export type Membership = typeof memberships.$inferSelect
 export type NewMembership = typeof memberships.$inferInsert
 export type Paket = Membership['paket']
+
+export type Attendance = typeof attendances.$inferSelect
+export type NewAttendance = typeof attendances.$inferInsert

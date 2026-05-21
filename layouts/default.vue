@@ -12,7 +12,10 @@ const memberLinks = [
 const staffLinks = computed(() => {
   const role = user.value?.role
   const links: { to: string, label: string }[] = []
-  if (role === 'admin' || role === 'owner') links.push({ to: '/admin', label: 'Admin' })
+  if (role === 'admin' || role === 'owner') {
+    links.push({ to: '/admin', label: 'Admin' })
+    links.push({ to: '/admin/scan', label: 'Scan QR' })
+  }
   if (role === 'owner') links.push({ to: '/owner', label: 'Owner' })
   return links
 })

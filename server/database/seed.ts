@@ -1,5 +1,5 @@
 /**
- * Seed akun staff (admin & owner).
+ * Seed akun default (owner, admin, dan satu member demo).
  * Jalankan: npm run db:seed
  *
  * Idempotent — kalau email sudah ada, password & role-nya di-update.
@@ -12,9 +12,10 @@ import { eq } from 'drizzle-orm'
 import { users } from './schema'
 import { hashUserPassword } from '../utils/password'
 
-const staffAccounts = [
+const seedAccounts = [
   { nama: 'Owner Heyfit', email: 'owner@heyfit.id', password: 'owner123', role: 'owner' as const },
   { nama: 'Admin Heyfit', email: 'admin@heyfit.id', password: 'admin123', role: 'admin' as const },
+  { nama: 'Member Heyfit', email: 'member@heyfit.id', password: 'member123', role: 'member' as const },
 ]
 
 async function main() {
@@ -35,9 +36,9 @@ async function main() {
   })
   const db = drizzle(pool)
 
-  console.log('Seeding akun staff...\n')
+  console.log('Seeding akun default...\n')
 
-  for (const acc of staffAccounts) {
+  for (const acc of seedAccounts) {
     const passwordHash = await hashUserPassword(acc.password)
     const existing = await db
       .select({ id: users.id })
@@ -65,7 +66,7 @@ async function main() {
 
   await pool.end()
   console.log('\nSeed selesai. Password default:')
-  for (const acc of staffAccounts)
+  for (const acc of seedAccounts)
     console.log(`  ${acc.email}  /  ${acc.password}`)
 }
 

@@ -31,7 +31,14 @@ export default defineEventHandler(async (event) => {
   const passwordHash = await hashUserPassword(password)
 
   // Pendaftaran publik selalu role 'member'. Admin/owner dibuat via seed.
-  const [result] = await db.insert(users).values({ nama, email, passwordHash, role: 'member' })
+  // qrToken dibuat sekarang supaya member langsung punya QR begitu mendaftar.
+  const [result] = await db.insert(users).values({
+    nama,
+    email,
+    passwordHash,
+    role: 'member',
+    qrToken: generateQrToken(),
+  })
 
   const sessionUser = {
     id: Number(result.insertId),
