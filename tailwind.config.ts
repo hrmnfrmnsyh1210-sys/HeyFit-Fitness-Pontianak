@@ -3,6 +3,9 @@ import defaultTheme from 'tailwindcss/defaultTheme'
 
 export default {
   darkMode: 'class',
+  // Glob konten di-inject otomatis oleh modul @nuxtjs/tailwindcss;
+  // properti ini hanya untuk memenuhi tipe `Config`.
+  content: [],
   theme: {
     extend: {
       fontFamily: {

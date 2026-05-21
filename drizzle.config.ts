@@ -11,6 +11,7 @@ export default defineConfig({
     user: process.env.TIDB_USER!,
     password: process.env.TIDB_PASSWORD!,
     database: process.env.TIDB_DATABASE!,
-    ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
+    // minVersion valid untuk mysql2 tapi belum ada di tipe SslOptions drizzle-kit.
+    ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true } as { rejectUnauthorized: boolean },
   },
 })

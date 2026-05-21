@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, mysqlEnum, timestamp, date } from 'drizzle-orm/mysql-core'
+import { mysqlTable, int, varchar, mysqlEnum, timestamp, date, boolean } from 'drizzle-orm/mysql-core'
 
 /**
  * Tabel users — menyimpan akun untuk semua role:
@@ -60,3 +60,43 @@ export type Paket = Membership['paket']
 
 export type Attendance = typeof attendances.$inferSelect
 export type NewAttendance = typeof attendances.$inferInsert
+
+/**
+ * Tabel instructors — data pelatih/instruktur kelas.
+ * Dikelola lewat dashboard admin (/admin/instruktur).
+ */
+export const instructors = mysqlTable('instructors', {
+  id: int('id').autoincrement().primaryKey(),
+  nama: varchar('nama', { length: 120 }).notNull(),
+  spesialisasi: varchar('spesialisasi', { length: 120 }).notNull(),
+  bio: varchar('bio', { length: 400 }),
+  aktif: boolean('aktif').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+/**
+ * Tabel classes — jadwal kelas yang ditawarkan gym.
+ * Dikelola lewat dashboard admin (/admin/kelas).
+ * instructorId nullable — relasi ke instructors dijaga di level aplikasi.
+ */
+export const classes = mysqlTable('classes', {
+  id: int('id').autoincrement().primaryKey(),
+  nama: varchar('nama', { length: 120 }).notNull(),
+  kategori: mysqlEnum('kategori', ['Mind & Body', 'Cardio', 'Strength', 'Dance']).notNull(),
+  instructorId: int('instructor_id'),
+  // Jadwal disimpan sebagai teks bebas, mis. "Sen & Rab · 18:00".
+  jadwal: varchar('jadwal', { length: 120 }).notNull(),
+  durasiMenit: int('durasi_menit').notNull().default(60),
+  kuota: int('kuota').notNull().default(15),
+  // Skala intensitas 1–3 (ringan → berat).
+  intensitas: int('intensitas').notNull().default(2),
+  aktif: boolean('aktif').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export type Instructor = typeof instructors.$inferSelect
+export type NewInstructor = typeof instructors.$inferInsert
+
+export type GymClass = typeof classes.$inferSelect
+export type NewGymClass = typeof classes.$inferInsert
+export type KategoriKelas = GymClass['kategori']

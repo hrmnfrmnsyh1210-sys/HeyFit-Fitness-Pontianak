@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Html5Qrcode } from 'html5-qrcode'
 
-definePageMeta({ middleware: 'auth', roles: ['admin', 'owner'] })
+definePageMeta({ layout: 'admin', middleware: 'auth', roles: ['admin', 'owner'] })
 useHead({ title: 'Scan QR Member — Heyfit' })
 
 interface ScanResult {
