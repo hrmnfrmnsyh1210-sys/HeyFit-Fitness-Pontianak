@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, mysqlEnum, timestamp, date, boolean, unique } from 'drizzle-orm/mysql-core'
+import { mysqlTable, int, varchar, text, mysqlEnum, timestamp, date, boolean, unique } from 'drizzle-orm/mysql-core'
 
 /**
  * Tabel users — menyimpan akun untuk semua role:
@@ -90,6 +90,8 @@ export const classes = mysqlTable('classes', {
   kuota: int('kuota').notNull().default(15),
   // Skala intensitas 1–3 (ringan → berat).
   intensitas: int('intensitas').notNull().default(2),
+  // Harga sekali booking dalam rupiah. 0 = gratis.
+  harga: int('harga').notNull().default(0),
   aktif: boolean('aktif').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
@@ -120,3 +122,34 @@ export type KategoriKelas = GymClass['kategori']
 
 export type Booking = typeof bookings.$inferSelect
 export type NewBooking = typeof bookings.$inferInsert
+
+/**
+ * Tabel payments — pengajuan pembayaran yang menunggu konfirmasi admin.
+ * Satu baris dibuat tiap kali member mengirim bukti transfer untuk:
+ * - jenis 'membership' : aktivasi/perpanjang membership (kolom `paket` diisi)
+ * - jenis 'kelas'      : booking sebuah kelas (kolom `classId` diisi)
+ * Admin meninjau lalu menyetujui/menolak. Saat disetujui, efek sampingnya
+ * dijalankan (membership diaktifkan / baris booking dibuat).
+ */
+export const payments = mysqlTable('payments', {
+  id: int('id').autoincrement().primaryKey(),
+  userId: int('user_id').notNull(),
+  jenis: mysqlEnum('jenis', ['membership', 'kelas']).notNull(),
+  // Diisi sesuai jenis:
+  paket: mysqlEnum('paket', ['bulanan', '3bulan', 'tahunan']),
+  classId: int('class_id'),
+  nominal: int('nominal').notNull(),
+  metode: mysqlEnum('metode', ['transfer']).notNull().default('transfer'),
+  // Bukti transfer disimpan sebagai data URL base64 (kolom LONGTEXT di DB).
+  buktiTransfer: text('bukti_transfer').notNull(),
+  catatan: varchar('catatan', { length: 255 }),
+  status: mysqlEnum('status', ['menunggu', 'disetujui', 'ditolak']).notNull().default('menunggu'),
+  // Alasan/keterangan dari admin saat meninjau.
+  catatanAdmin: varchar('catatan_admin', { length: 255 }),
+  reviewedBy: int('reviewed_by'),
+  reviewedAt: timestamp('reviewed_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export type Payment = typeof payments.$inferSelect
+export type NewPayment = typeof payments.$inferInsert

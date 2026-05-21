@@ -1,15 +1,24 @@
 import { and, eq } from 'drizzle-orm'
-import { bookings } from '../../../database/schema'
+import { payments } from '../../../database/schema'
 
-/** Batalkan reservasi kelas milik member yang sedang login. */
+/**
+ * Batalkan pengajuan booking kelas yang masih menunggu konfirmasi.
+ * Booking yang sudah dikonfirmasi (sudah dibayar) tidak bisa dibatalkan
+ * sendiri oleh member — hubungi admin.
+ */
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const id = requireIdParam(event)
   const db = useDb()
 
   await db
-    .delete(bookings)
-    .where(and(eq(bookings.classId, id), eq(bookings.userId, user.id)))
+    .delete(payments)
+    .where(and(
+      eq(payments.userId, user.id),
+      eq(payments.jenis, 'kelas'),
+      eq(payments.classId, id),
+      eq(payments.status, 'menunggu'),
+    ))
 
   return { ok: true }
 })

@@ -51,6 +51,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Intensitas harus 1–3.' })
     updates.intensitas = v
   }
+  if (body?.harga !== undefined) {
+    const v = Number(body.harga)
+    if (!Number.isInteger(v) || v < 0)
+      throw createError({ statusCode: 400, statusMessage: 'Harga tidak valid.' })
+    updates.harga = v
+  }
   if (body?.instructorId !== undefined) {
     const iid
       = body.instructorId == null || body.instructorId === '' ? null : Number(body.instructorId)

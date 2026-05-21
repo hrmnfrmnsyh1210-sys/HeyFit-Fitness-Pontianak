@@ -34,6 +34,14 @@ async function tableExists(table) {
   return rows.length > 0
 }
 
+async function columnExists(table, column) {
+  const [rows] = await conn.query(
+    'SELECT 1 FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ? LIMIT 1',
+    [TIDB_DATABASE, table, column],
+  )
+  return rows.length > 0
+}
+
 // 1) Tabel instructors
 if (await tableExists('instructors')) {
   console.log('  ↻ tabel instructors sudah ada — dilewati')
@@ -67,11 +75,21 @@ else {
       \`durasi_menit\` INT NOT NULL DEFAULT 60,
       \`kuota\` INT NOT NULL DEFAULT 15,
       \`intensitas\` INT NOT NULL DEFAULT 2,
+      \`harga\` INT NOT NULL DEFAULT 0,
       \`aktif\` BOOLEAN NOT NULL DEFAULT TRUE,
       \`created_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `)
   console.log('  ✓ tabel classes dibuat')
+}
+
+// 2b) Kolom classes.harga — untuk tabel classes lama yang belum punya kolom ini.
+if (await columnExists('classes', 'harga')) {
+  console.log('  ↻ kolom classes.harga sudah ada — dilewati')
+}
+else {
+  await conn.query('ALTER TABLE `classes` ADD COLUMN `harga` INT NOT NULL DEFAULT 0')
+  console.log('  ✓ kolom classes.harga dibuat')
 }
 
 // 3) Data contoh — idempoten berdasarkan nama. Aman dijalankan berulang:
@@ -86,14 +104,14 @@ const SEED_INSTRUCTORS = [
   ['Iwan Setiawan', 'Boxing & Combat', 'Mantan atlet tinju amatir, pelatih boxing fundamentals.'],
 ]
 
-// nama, kategori, instruktur, jadwal, durasi_menit, kuota, intensitas
+// nama, kategori, instruktur, jadwal, durasi_menit, kuota, intensitas, harga
 const SEED_CLASSES = [
-  ['Yoga Flow', 'Mind & Body', 'Sari Putri', 'Sen & Rab · 18:00', 60, 15, 1],
-  ['Reformer Pilates', 'Mind & Body', 'Dini Anjani', 'Sel & Kam · 19:00', 50, 12, 2],
-  ['HIIT Burn', 'Cardio', 'Bayu Pratama', 'Jum · 17:30', 45, 20, 3],
-  ['Zumba Party', 'Dance', 'Mira Sanjaya', 'Sab · 09:00', 60, 25, 2],
-  ['Functional Strength', 'Strength', 'Reza Hakim', 'Sen, Rab, Jum · 06:30', 55, 16, 3],
-  ['Boxing Fundamentals', 'Cardio', 'Iwan Setiawan', 'Kam & Sab · 18:30', 60, 14, 3],
+  ['Yoga Flow', 'Mind & Body', 'Sari Putri', 'Sen & Rab · 18:00', 60, 15, 1, 50000],
+  ['Reformer Pilates', 'Mind & Body', 'Dini Anjani', 'Sel & Kam · 19:00', 50, 12, 2, 75000],
+  ['HIIT Burn', 'Cardio', 'Bayu Pratama', 'Jum · 17:30', 45, 20, 3, 60000],
+  ['Zumba Party', 'Dance', 'Mira Sanjaya', 'Sab · 09:00', 60, 25, 2, 55000],
+  ['Functional Strength', 'Strength', 'Reza Hakim', 'Sen, Rab, Jum · 06:30', 55, 16, 3, 65000],
+  ['Boxing Fundamentals', 'Cardio', 'Iwan Setiawan', 'Kam & Sab · 18:30', 60, 14, 3, 70000],
 ]
 
 // Instruktur — tambah yang belum ada (dicocokkan berdasarkan nama).
@@ -111,28 +129,37 @@ for (const [nama, spesialisasi, bio] of SEED_INSTRUCTORS) {
 const [allInstr] = await conn.query('SELECT id, nama FROM `instructors`')
 const instrIdOf = nama => allInstr.find(i => i.nama === nama)?.id ?? null
 
-// Kelas — tambah yang belum ada; backfill instruktur untuk kelas tanpa pelatih.
-for (const [nama, kategori, instruktur, jadwal, durasi, kuota, intensitas] of SEED_CLASSES) {
+// Kelas — tambah yang belum ada; backfill instruktur & harga untuk kelas lama.
+for (const [nama, kategori, instruktur, jadwal, durasi, kuota, intensitas, harga] of SEED_CLASSES) {
   const instructorId = instrIdOf(instruktur)
   const [exist] = await conn.query(
-    'SELECT id, instructor_id FROM `classes` WHERE `nama` = ? LIMIT 1',
+    'SELECT id, instructor_id, harga FROM `classes` WHERE `nama` = ? LIMIT 1',
     [nama],
   )
   if (!exist.length) {
     await conn.query(
       `INSERT INTO \`classes\`
-        (\`nama\`, \`kategori\`, \`instructor_id\`, \`jadwal\`, \`durasi_menit\`, \`kuota\`, \`intensitas\`)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [nama, kategori, instructorId, jadwal, durasi, kuota, intensitas],
+        (\`nama\`, \`kategori\`, \`instructor_id\`, \`jadwal\`, \`durasi_menit\`, \`kuota\`, \`intensitas\`, \`harga\`)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nama, kategori, instructorId, jadwal, durasi, kuota, intensitas, harga],
     )
     console.log(`  ✓ kelas ditambahkan: ${nama} (pelatih: ${instruktur})`)
+    continue
   }
-  else if (exist[0].instructor_id == null && instructorId != null) {
+
+  const updates = {}
+  if (exist[0].instructor_id == null && instructorId != null)
+    updates.instructor_id = instructorId
+  if (Number(exist[0].harga) === 0 && harga > 0)
+    updates.harga = harga
+
+  if (Object.keys(updates).length) {
+    const setClause = Object.keys(updates).map(k => `\`${k}\` = ?`).join(', ')
     await conn.query(
-      'UPDATE `classes` SET `instructor_id` = ? WHERE `id` = ?',
-      [instructorId, exist[0].id],
+      `UPDATE \`classes\` SET ${setClause} WHERE \`id\` = ?`,
+      [...Object.values(updates), exist[0].id],
     )
-    console.log(`  ✓ pelatih di-set untuk kelas: ${nama} -> ${instruktur}`)
+    console.log(`  ✓ kelas diperbarui: ${nama} (${Object.keys(updates).join(', ')})`)
   }
 }
 

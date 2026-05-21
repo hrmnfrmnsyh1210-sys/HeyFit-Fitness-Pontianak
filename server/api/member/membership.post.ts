@@ -1,64 +1,55 @@
-import { eq } from 'drizzle-orm'
-import { memberships } from '../../database/schema'
+import { and, eq } from 'drizzle-orm'
+import { payments } from '../../database/schema'
 
 /**
- * Aktivasi atau perpanjang membership untuk user yang sedang login.
- * Body: { paket: 'bulanan' | '3bulan' | 'tahunan' }
+ * Pengajuan pembayaran membership untuk user yang sedang login.
+ * Body: { paket, buktiTransfer (data URL gambar), metode?, catatan? }
  *
- * - Belum punya membership / sudah kadaluarsa  -> mulai dihitung dari hari ini
- * - Membership masih aktif                     -> diperpanjang dari tanggal berakhir
+ * Tidak langsung mengaktifkan membership — hanya membuat pengajuan
+ * berstatus 'menunggu'. Membership aktif setelah admin menyetujui bukti
+ * transfer (lihat /api/admin/payments/[id]/review).
  */
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
-  const body = await readBody<{ paket?: string }>(event)
-  const paket = body?.paket
+  const body = await readBody<Record<string, unknown>>(event)
 
-  if (!isPaket(paket)) {
+  const paket = body?.paket
+  if (!isPaket(paket))
     throw createError({ statusCode: 400, statusMessage: 'Paket tidak valid.' })
-  }
+
+  const buktiTransfer = validateBuktiTransfer(body?.buktiTransfer)
+  const catatan = parseCatatan(body?.catatan)
 
   const db = useDb()
-  const durasi = PAKET_DURASI[paket]
-  const hariIni = today()
 
-  const existing = (
-    await db.select().from(memberships).where(eq(memberships.userId, user.id)).limit(1)
-  )[0]
-
-  // Titik mulai perhitungan: dari tanggal berakhir kalau masih aktif,
-  // selain itu dari hari ini.
-  const masihAktif = existing && daysUntil(existing.berakhir) >= 0
-  const basis = masihAktif ? new Date(existing.berakhir) : hariIni
-  const berakhirBaru = toDateString(addDays(basis, durasi))
-
-  if (existing) {
-    await db
-      .update(memberships)
-      .set({
-        paket,
-        berakhir: berakhirBaru,
-        status: 'aktif',
-        // Kalau sudah kadaluarsa, tanggal mulai di-reset ke hari ini.
-        mulai: masihAktif ? existing.mulai : toDateString(hariIni),
-      })
-      .where(eq(memberships.userId, user.id))
-  }
-  else {
-    await db.insert(memberships).values({
-      userId: user.id,
-      paket,
-      mulai: toDateString(hariIni),
-      berakhir: berakhirBaru,
-      status: 'aktif',
+  // Cegah pengajuan ganda yang masih menunggu.
+  const pending = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .where(and(
+      eq(payments.userId, user.id),
+      eq(payments.jenis, 'membership'),
+      eq(payments.status, 'menunggu'),
+    ))
+    .limit(1)
+  if (pending.length) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'Kamu masih punya pengajuan membership yang menunggu konfirmasi.',
     })
   }
 
-  return {
-    membership: {
-      paket,
-      berakhir: berakhirBaru,
-      sisaHari: daysUntil(berakhirBaru),
-      diperpanjang: Boolean(masihAktif),
-    },
-  }
+  const nominal = PAKET_HARGA[paket]
+
+  await db.insert(payments).values({
+    userId: user.id,
+    jenis: 'membership',
+    paket,
+    nominal,
+    buktiTransfer,
+    catatan,
+    status: 'menunggu',
+  })
+
+  return { ok: true, nominal, paket }
 })

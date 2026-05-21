@@ -12,6 +12,7 @@ interface ClassRow {
   durasiMenit: number
   kuota: number
   intensitas: number
+  harga: number
   aktif: boolean
 }
 interface InstructorRow { id: number, nama: string, aktif: boolean }
@@ -41,6 +42,7 @@ const form = reactive({
   durasiMenit: 60,
   kuota: 15,
   intensitas: 2,
+  harga: 50000,
   aktif: true,
 })
 
@@ -48,7 +50,7 @@ function openCreate() {
   editingId.value = null
   Object.assign(form, {
     nama: '', kategori: 'Mind & Body', instructorId: '', jadwal: '',
-    durasiMenit: 60, kuota: 15, intensitas: 2, aktif: true,
+    durasiMenit: 60, kuota: 15, intensitas: 2, harga: 50000, aktif: true,
   })
   formError.value = ''
   showForm.value = true
@@ -59,7 +61,7 @@ function openEdit(c: ClassRow) {
   Object.assign(form, {
     nama: c.nama, kategori: c.kategori, instructorId: c.instructorId ?? '',
     jadwal: c.jadwal, durasiMenit: c.durasiMenit, kuota: c.kuota,
-    intensitas: c.intensitas, aktif: c.aktif,
+    intensitas: c.intensitas, harga: c.harga, aktif: c.aktif,
   })
   formError.value = ''
   showForm.value = true
@@ -76,6 +78,7 @@ async function submitForm() {
     durasiMenit: form.durasiMenit,
     kuota: form.kuota,
     intensitas: form.intensitas,
+    harga: form.harga,
     aktif: form.aktif,
   }
   try {
@@ -194,6 +197,10 @@ async function hapusKelas(c: ClassRow) {
             <dt class="text-slate-500">Kuota</dt>
             <dd class="text-slate-300">{{ c.kuota }} orang</dd>
           </div>
+          <div class="flex justify-between gap-3">
+            <dt class="text-slate-500">Harga</dt>
+            <dd class="text-slate-300">{{ c.harga > 0 ? rupiah(c.harga) : 'Gratis' }}</dd>
+          </div>
           <div class="flex justify-between gap-3 items-center">
             <dt class="text-slate-500">Intensitas</dt>
             <dd class="flex items-center gap-1">
@@ -277,6 +284,11 @@ async function hapusKelas(c: ClassRow) {
               <option :value="3">Berat</option>
             </select>
           </div>
+        </div>
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500">Harga booking (Rp)</label>
+          <input v-model.number="form.harga" type="number" min="0" step="1000" required class="input mt-1.5">
+          <p class="text-[11px] text-slate-500 mt-1">Isi 0 untuk kelas gratis (booking tanpa pembayaran).</p>
         </div>
         <label class="flex items-center gap-2.5 text-sm text-slate-300">
           <input v-model="form.aktif" type="checkbox" class="h-4 w-4 rounded border-white/20 bg-white/[0.03] accent-brand-400">

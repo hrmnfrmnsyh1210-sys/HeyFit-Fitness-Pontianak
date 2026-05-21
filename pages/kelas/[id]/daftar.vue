@@ -12,10 +12,6 @@ useHead(() => ({
   title: kelas.value ? `Booking ${kelas.value.nama} — Heyfit` : 'Booking Kelas — Heyfit',
 }))
 
-const loading = ref(false)
-const actionError = ref('')
-const justBooked = ref(false)
-
 const intensitasLabel = ['', 'Ringan', 'Menengah', 'Berat']
 
 const slotTersisa = computed(() =>
@@ -25,29 +21,48 @@ const penuh = computed(() => !!kelas.value && slotTersisa.value <= 0)
 const terisiPersen = computed(() =>
   kelas.value ? Math.min(100, Math.round((kelas.value.terisi / kelas.value.kuota) * 100)) : 0,
 )
+const gratis = computed(() => !!kelas.value && kelas.value.harga <= 0)
 
-async function bookKelas() {
+// form pembayaran
+const buktiTransfer = ref('')
+const catatan = ref('')
+const loading = ref(false)
+const actionError = ref('')
+const justSubmitted = ref(false)
+
+async function ajukan() {
   actionError.value = ''
+  if (!gratis.value && !buktiTransfer.value) {
+    actionError.value = 'Unggah bukti transfer terlebih dahulu.'
+    return
+  }
   loading.value = true
   try {
-    await $fetch(`/api/classes/${id.value}/book`, { method: 'POST' })
-    justBooked.value = true
+    await $fetch(`/api/classes/${id.value}/book`, {
+      method: 'POST',
+      body: gratis.value
+        ? {}
+        : { buktiTransfer: buktiTransfer.value, catatan: catatan.value },
+    })
+    justSubmitted.value = true
+    buktiTransfer.value = ''
+    catatan.value = ''
     await refresh()
   }
   catch (err) {
-    actionError.value = (err as { statusMessage?: string })?.statusMessage ?? 'Gagal booking. Coba lagi.'
+    actionError.value = (err as { statusMessage?: string })?.statusMessage ?? 'Gagal memproses. Coba lagi.'
   }
   finally {
     loading.value = false
   }
 }
 
-async function batalBooking() {
+async function batalkan() {
   actionError.value = ''
   loading.value = true
   try {
     await $fetch(`/api/classes/${id.value}/book`, { method: 'DELETE' })
-    justBooked.value = false
+    justSubmitted.value = false
     await refresh()
   }
   catch (err) {
@@ -87,7 +102,7 @@ async function batalBooking() {
         Reservasi <span class="text-gradient">{{ kelas.nama }}</span>
       </h1>
       <p class="mt-3 text-slate-400">
-        Periksa detail kelas di bawah, lalu konfirmasi reservasimu.
+        Periksa detail kelas, lakukan pembayaran, lalu unggah bukti transfer untuk dikonfirmasi admin.
       </p>
 
       <div class="mt-8 card p-6 lg:p-8 space-y-6">
@@ -120,7 +135,7 @@ async function batalBooking() {
         <p v-if="kelas.instrukturBio" class="-mt-2 text-sm text-slate-400">{{ kelas.instrukturBio }}</p>
 
         <!-- info grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="rounded-xl border border-white/[0.06] p-4">
             <p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Jadwal</p>
             <p class="text-sm text-white font-medium">{{ kelas.jadwal }}</p>
@@ -129,11 +144,15 @@ async function batalBooking() {
             <p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Durasi</p>
             <p class="text-sm text-white font-medium">{{ kelas.durasiMenit }} menit</p>
           </div>
-          <div class="rounded-xl border border-white/[0.06] p-4 col-span-2 sm:col-span-1">
+          <div class="rounded-xl border border-white/[0.06] p-4">
             <p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Slot</p>
             <p class="text-sm font-medium" :class="penuh ? 'text-rose-300' : 'text-brand-300'">
-              {{ penuh ? 'Penuh' : `${slotTersisa} dari ${kelas.kuota} tersisa` }}
+              {{ penuh ? 'Penuh' : `${slotTersisa} tersisa` }}
             </p>
+          </div>
+          <div class="rounded-xl border border-brand-400/20 bg-brand-400/[0.06] p-4">
+            <p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Biaya</p>
+            <p class="text-sm font-bold text-brand-300">{{ gratis ? 'Gratis' : rupiah(kelas.harga) }}</p>
           </div>
         </div>
 
@@ -160,10 +179,10 @@ async function batalBooking() {
           {{ actionError }}
         </div>
 
-        <!-- AKSI -->
-        <!-- sudah terdaftar -->
+        <!-- ====== AKSI ====== -->
+        <!-- sudah terdaftar (dikonfirmasi) -->
         <div
-          v-if="kelas.sudahDaftar"
+          v-if="kelas.bookingStatus === 'terdaftar'"
           class="rounded-xl border border-brand-400/30 bg-brand-400/[0.08] p-5"
         >
           <div class="flex items-center gap-3">
@@ -173,22 +192,45 @@ async function batalBooking() {
               </svg>
             </span>
             <div>
-              <p class="text-white font-semibold">
-                {{ justBooked ? 'Reservasi berhasil!' : 'Kamu sudah terdaftar' }}
-              </p>
-              <p class="text-sm text-slate-400">Slot kelas ini sudah dipesan atas namamu.</p>
+              <p class="text-white font-semibold">Kamu sudah terdaftar</p>
+              <p class="text-sm text-slate-400">Pembayaranmu sudah dikonfirmasi admin. Sampai jumpa di kelas!</p>
             </div>
           </div>
           <div class="mt-4 flex flex-wrap gap-3">
             <NuxtLink to="/dashboard" class="btn-primary">Lihat di dashboard</NuxtLink>
             <NuxtLink to="/kelas" class="btn-ghost">Booking kelas lain</NuxtLink>
+          </div>
+        </div>
+
+        <!-- menunggu konfirmasi -->
+        <div
+          v-else-if="kelas.bookingStatus === 'menunggu'"
+          class="rounded-xl border border-amber-400/30 bg-amber-400/[0.08] p-5"
+        >
+          <div class="flex items-center gap-3">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-400/20 text-amber-300 shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+            <div>
+              <p class="text-white font-semibold">
+                {{ justSubmitted ? 'Pengajuan terkirim!' : 'Menunggu konfirmasi admin' }}
+              </p>
+              <p class="text-sm text-slate-400">
+                Bukti transfermu sedang ditinjau admin. Kamu akan resmi terdaftar setelah disetujui.
+              </p>
+            </div>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <NuxtLink to="/dashboard" class="btn-primary">Cek status di dashboard</NuxtLink>
             <button
               type="button"
               :disabled="loading"
               class="btn border border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
-              @click="batalBooking"
+              @click="batalkan"
             >
-              {{ loading ? 'Memproses…' : 'Batalkan reservasi' }}
+              {{ loading ? 'Memproses…' : 'Batalkan pengajuan' }}
             </button>
           </div>
         </div>
@@ -203,16 +245,41 @@ async function batalBooking() {
           Kuota kelas sudah penuh
         </button>
 
-        <!-- bisa booking -->
+        <!-- kelas gratis -->
         <button
-          v-else
+          v-else-if="gratis"
           type="button"
           :disabled="loading"
           class="btn-primary w-full"
-          @click="bookKelas"
+          @click="ajukan"
         >
-          {{ loading ? 'Memproses…' : 'Konfirmasi Booking' }}
+          {{ loading ? 'Memproses…' : 'Booking kelas (gratis)' }}
         </button>
+
+        <!-- form pembayaran -->
+        <div v-else class="space-y-5 border-t border-white/[0.06] pt-6">
+          <h2 class="font-display text-lg font-bold text-white">Pembayaran</h2>
+
+          <PaymentInfo :nominal="kelas.harga" />
+
+          <!-- bukti -->
+          <div>
+            <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">Bukti transfer</label>
+            <BuktiTransferUpload v-model="buktiTransfer" />
+          </div>
+
+          <!-- catatan -->
+          <div>
+            <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">
+              Catatan <span class="text-slate-600 normal-case tracking-normal">(opsional — nama pengirim, dll)</span>
+            </label>
+            <input v-model="catatan" maxlength="255" class="input" placeholder="mis. transfer a/n Budi Santoso">
+          </div>
+
+          <button type="button" :disabled="loading" class="btn-primary w-full" @click="ajukan">
+            {{ loading ? 'Mengirim…' : 'Kirim Bukti & Ajukan Booking' }}
+          </button>
+        </div>
       </div>
     </div>
   </section>

@@ -36,6 +36,19 @@ const sisaPersen = computed(() => {
 const { data: bookingData } = await useFetch('/api/member/bookings')
 const bookings = computed(() => bookingData.value?.data ?? [])
 
+// Riwayat & status pengajuan pembayaran member.
+const { data: paymentData } = await useFetch('/api/member/payments', { default: () => ({ data: [] }) })
+const payments = computed(() => paymentData.value?.data ?? [])
+
+const statusLabel: Record<string, string> = {
+  menunggu: 'Menunggu', disetujui: 'Disetujui', ditolak: 'Ditolak',
+}
+function statusBadge(s: string) {
+  if (s === 'disetujui') return 'border-brand-400/30 text-brand-300 bg-brand-400/10'
+  if (s === 'ditolak') return 'border-rose-400/30 text-rose-300 bg-rose-400/10'
+  return 'border-amber-400/30 text-amber-300 bg-amber-400/10'
+}
+
 // ─── Data contoh (belum DB-backed) ───────────────────────────
 const statsContoh = [
   { label: 'Kelas bulan ini', value: '8' },
@@ -218,6 +231,36 @@ const statsContoh = [
         <p class="text-sm text-slate-400 mb-3">Kamu belum booking kelas apa pun.</p>
         <NuxtLink to="/kelas" class="btn-primary">Cari kelas</NuxtLink>
       </div>
+    </div>
+
+    <!-- STATUS PEMBAYARAN -->
+    <div v-if="payments.length" class="card p-6 mt-4">
+      <h2 class="font-display text-lg font-bold text-white mb-4">Status Pembayaran</h2>
+      <ul class="divide-y divide-white/[0.06]">
+        <li v-for="p in payments" :key="p.id" class="py-3 flex items-center gap-4">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-white font-medium truncate">
+              {{ p.jenis === 'membership'
+                ? `Membership — paket ${p.paket}`
+                : `Kelas — ${p.kelasNama ?? 'Kelas'}` }}
+            </p>
+            <p class="text-xs text-slate-500">
+              {{ rupiah(p.nominal) }} · Transfer · {{ tanggalID(p.createdAt) }}
+            </p>
+            <p v-if="p.status === 'ditolak' && p.catatanAdmin" class="text-xs text-rose-300 mt-0.5">
+              Ditolak: {{ p.catatanAdmin }}
+            </p>
+          </div>
+          <span
+            :class="[
+              'shrink-0 inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold',
+              statusBadge(p.status),
+            ]"
+          >
+            {{ statusLabel[p.status] ?? p.status }}
+          </span>
+        </li>
+      </ul>
     </div>
   </section>
 </template>

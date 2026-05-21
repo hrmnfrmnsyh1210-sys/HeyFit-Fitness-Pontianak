@@ -1,10 +1,10 @@
-import { asc, count, eq } from 'drizzle-orm'
-import { bookings, classes, instructors } from '../../database/schema'
+import { and, asc, count, eq } from 'drizzle-orm'
+import { bookings, classes, instructors, payments } from '../../database/schema'
 
 /**
  * Daftar kelas aktif untuk halaman publik /kelas.
- * Termasuk nama pelatih (personal trainer) dan jumlah slot yang sudah terisi
- * (dihitung nyata dari tabel bookings). Tidak butuh login.
+ * `terisi` = booking yang sudah dikonfirmasi + pengajuan pembayaran yang
+ * masih menunggu (slot ditahan selama menunggu konfirmasi admin).
  */
 export default defineEventHandler(async () => {
   const db = useDb()
@@ -18,6 +18,7 @@ export default defineEventHandler(async () => {
       durasiMenit: classes.durasiMenit,
       kuota: classes.kuota,
       intensitas: classes.intensitas,
+      harga: classes.harga,
       instrukturNama: instructors.nama,
       instrukturSpesialisasi: instructors.spesialisasi,
     })
@@ -26,11 +27,26 @@ export default defineEventHandler(async () => {
     .where(eq(classes.aktif, true))
     .orderBy(asc(classes.nama))
 
-  const counts = await db
+  // Booking terkonfirmasi per kelas.
+  const bookingCounts = await db
     .select({ classId: bookings.classId, n: count() })
     .from(bookings)
     .groupBy(bookings.classId)
-  const terisiMap = new Map(counts.map(c => [c.classId, Number(c.n)]))
+
+  // Pengajuan pembayaran kelas yang masih menunggu konfirmasi.
+  const pendingCounts = await db
+    .select({ classId: payments.classId, n: count() })
+    .from(payments)
+    .where(and(eq(payments.jenis, 'kelas'), eq(payments.status, 'menunggu')))
+    .groupBy(payments.classId)
+
+  const terisiMap = new Map<number, number>()
+  for (const r of bookingCounts)
+    terisiMap.set(r.classId, (terisiMap.get(r.classId) ?? 0) + Number(r.n))
+  for (const r of pendingCounts) {
+    if (r.classId != null)
+      terisiMap.set(r.classId, (terisiMap.get(r.classId) ?? 0) + Number(r.n))
+  }
 
   return {
     data: rows.map(r => ({ ...r, terisi: terisiMap.get(r.id) ?? 0 })),

@@ -108,7 +108,12 @@ function bgFor(kategori: string) {
             w/ {{ k.instrukturNama ?? 'Pelatih segera diumumkan' }}
             <span v-if="k.instrukturSpesialisasi" class="text-brand-400/80"> · {{ k.instrukturSpesialisasi }}</span>
           </p>
-          <p class="text-sm text-slate-400 mt-3">{{ k.jadwal }}</p>
+          <div class="mt-3 flex items-center justify-between gap-2">
+            <p class="text-sm text-slate-400">{{ k.jadwal }}</p>
+            <p class="text-sm font-bold text-brand-300 shrink-0">
+              {{ k.harga > 0 ? rupiah(k.harga) : 'Gratis' }}
+            </p>
+          </div>
 
           <div class="mt-3 h-1 rounded-full bg-white/10 overflow-hidden">
             <div

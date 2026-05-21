@@ -1,10 +1,11 @@
 import { and, count, eq } from 'drizzle-orm'
-import { bookings, classes, instructors } from '../../database/schema'
+import { bookings, classes, instructors, payments } from '../../database/schema'
 
 /**
  * Detail satu kelas untuk halaman booking.
- * Publik — tapi kalau request datang dari user yang login, ikut mengembalikan
- * `sudahDaftar` (apakah user sudah punya reservasi di kelas ini).
+ * Publik — kalau request datang dari user yang login, ikut mengembalikan
+ * `bookingStatus`: 'terdaftar' (sudah dikonfirmasi), 'menunggu' (bukti
+ * transfer masih ditinjau), atau 'none'.
  */
 export default defineEventHandler(async (event) => {
   const id = requireIdParam(event)
@@ -20,6 +21,7 @@ export default defineEventHandler(async (event) => {
         durasiMenit: classes.durasiMenit,
         kuota: classes.kuota,
         intensitas: classes.intensitas,
+        harga: classes.harga,
         aktif: classes.aktif,
         instrukturNama: instructors.nama,
         instrukturSpesialisasi: instructors.spesialisasi,
@@ -34,21 +36,48 @@ export default defineEventHandler(async (event) => {
   if (!row || !row.aktif)
     throw createError({ statusCode: 404, statusMessage: 'Kelas tidak ditemukan.' })
 
-  const terisi = Number(
+  const terkonfirmasi = Number(
     (await db.select({ n: count() }).from(bookings).where(eq(bookings.classId, id)))[0]?.n ?? 0,
   )
+  const menunggu = Number(
+    (
+      await db
+        .select({ n: count() })
+        .from(payments)
+        .where(and(
+          eq(payments.jenis, 'kelas'),
+          eq(payments.classId, id),
+          eq(payments.status, 'menunggu'),
+        ))
+    )[0]?.n ?? 0,
+  )
 
-  // Status reservasi user — hanya kalau sedang login.
-  let sudahDaftar = false
+  // Status booking user — hanya kalau sedang login.
+  let bookingStatus: 'none' | 'menunggu' | 'terdaftar' = 'none'
   const session = await getUserSession(event)
   if (session?.user) {
-    const mine = await db
+    const sudah = await db
       .select({ id: bookings.id })
       .from(bookings)
       .where(and(eq(bookings.classId, id), eq(bookings.userId, session.user.id)))
       .limit(1)
-    sudahDaftar = mine.length > 0
+    if (sudah.length) {
+      bookingStatus = 'terdaftar'
+    }
+    else {
+      const pending = await db
+        .select({ id: payments.id })
+        .from(payments)
+        .where(and(
+          eq(payments.jenis, 'kelas'),
+          eq(payments.classId, id),
+          eq(payments.userId, session.user.id),
+          eq(payments.status, 'menunggu'),
+        ))
+        .limit(1)
+      if (pending.length) bookingStatus = 'menunggu'
+    }
   }
 
-  return { data: { ...row, terisi, sudahDaftar } }
+  return { data: { ...row, terisi: terkonfirmasi + menunggu, bookingStatus } }
 })

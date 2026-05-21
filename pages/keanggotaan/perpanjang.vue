@@ -2,7 +2,10 @@
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Perpanjang Member — Heyfit' })
 
-const { data, refresh } = await useFetch('/api/member/overview')
+const { data } = await useFetch('/api/member/overview')
+const { data: paymentsData, refresh: refreshPayments } = await useFetch('/api/member/payments', {
+  default: () => ({ data: [] }),
+})
 
 type Durasi = 'bulanan' | '3bulan' | 'tahunan'
 
@@ -15,29 +18,41 @@ const opsi = [
 const durasi = ref<Durasi>('3bulan')
 const selected = computed(() => opsi.find(o => o.id === durasi.value)!)
 const membership = computed(() => data.value?.membership ?? null)
+const pendingMembership = computed(() =>
+  (paymentsData.value?.data ?? []).find(p => p.jenis === 'membership' && p.status === 'menunggu') ?? null,
+)
 
 const paketLabel: Record<string, string> = {
   bulanan: 'Bulanan', '3bulan': '3 Bulan', tahunan: 'Tahunan',
 }
 
-function formatTanggal(str: string) {
-  return new Date(str).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-}
-
+// form pembayaran
+const buktiTransfer = ref('')
+const catatan = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
-const result = ref<{ berakhir: string, sisaHari: number, diperpanjang: boolean } | null>(null)
+const submitted = ref(false)
 
-async function submit() {
+async function ajukan() {
   errorMsg.value = ''
+  if (!buktiTransfer.value) {
+    errorMsg.value = 'Unggah bukti transfer terlebih dahulu.'
+    return
+  }
   loading.value = true
   try {
-    const res = await $fetch('/api/member/membership', {
+    await $fetch('/api/member/membership', {
       method: 'POST',
-      body: { paket: durasi.value },
+      body: {
+        paket: durasi.value,
+        buktiTransfer: buktiTransfer.value,
+        catatan: catatan.value,
+      },
     })
-    result.value = res.membership
-    await refresh()
+    submitted.value = true
+    buktiTransfer.value = ''
+    catatan.value = ''
+    await refreshPayments()
   }
   catch (err) {
     errorMsg.value = (err as { statusMessage?: string })?.statusMessage ?? 'Gagal memproses. Coba lagi.'
@@ -55,27 +70,36 @@ async function submit() {
       <h1 class="font-display text-4xl font-extrabold text-white">
         Perpanjang <span class="text-gradient">membership</span>
       </h1>
-      <p class="mt-3 text-slate-400">Cukup 30 detik dari ponselmu.</p>
+      <p class="mt-3 text-slate-400">Transfer, unggah bukti, tunggu konfirmasi admin.</p>
     </div>
 
-    <!-- sukses -->
-    <div v-if="result" class="card p-10 text-center">
-      <div class="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-400/20 text-brand-300 shadow-glow">
-        <svg class="w-7 h-7" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M16.704 5.296a1 1 0 010 1.408l-7.5 7.5a1 1 0 01-1.408 0l-3.5-3.5a1 1 0 011.408-1.408L8.5 12.092l6.796-6.796a1 1 0 011.408 0z" clip-rule="evenodd" />
+    <!-- sukses kirim -->
+    <div v-if="submitted" class="card p-10 text-center">
+      <div class="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full bg-amber-400/20 text-amber-300">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
-      <h2 class="font-display text-2xl font-extrabold text-white mb-2">
-        {{ result.diperpanjang ? 'Membership diperpanjang!' : 'Membership aktif!' }}
-      </h2>
+      <h2 class="font-display text-2xl font-extrabold text-white mb-2">Pengajuan terkirim!</h2>
       <p class="text-slate-400">
-        Berlaku sampai <span class="text-brand-300 font-semibold">{{ formatTanggal(result.berakhir) }}</span>
-        ({{ result.sisaHari }} hari lagi).
+        Bukti transfermu sedang ditinjau admin. Membership diperpanjang otomatis setelah disetujui.
       </p>
       <div class="mt-6 flex flex-wrap justify-center gap-3">
-        <NuxtLink to="/dashboard" class="btn-primary">Ke Dashboard</NuxtLink>
+        <NuxtLink to="/dashboard" class="btn-primary">Cek status di Dashboard</NuxtLink>
         <NuxtLink to="/kelas" class="btn-ghost">Booking kelas</NuxtLink>
       </div>
+    </div>
+
+    <!-- sudah ada pengajuan menunggu -->
+    <div v-else-if="pendingMembership" class="card p-8 text-center border-amber-400/30 bg-amber-400/[0.05]">
+      <h2 class="font-display text-xl font-bold text-white mb-2">Pengajuan sedang ditinjau</h2>
+      <p class="text-sm text-slate-400 mb-6">
+        Kamu sudah mengirim bukti pembayaran paket
+        <span class="text-white font-semibold">{{ pendingMembership.paket }}</span>
+        sebesar <span class="text-brand-300 font-semibold">{{ rupiah(pendingMembership.nominal) }}</span>.
+        Tunggu konfirmasi admin.
+      </p>
+      <NuxtLink to="/dashboard" class="btn-primary">Ke Dashboard</NuxtLink>
     </div>
 
     <!-- form -->
@@ -89,11 +113,11 @@ async function submit() {
       >
         <p class="text-xs uppercase tracking-widest text-slate-500 mb-1">Status sekarang</p>
         <p v-if="membership && membership.aktif" class="text-white font-semibold">
-          Paket {{ paketLabel[membership.paket] }} · aktif sampai {{ formatTanggal(membership.berakhir) }}
+          Paket {{ paketLabel[membership.paket] }} · aktif sampai {{ tanggalID(membership.berakhir) }}
           <span class="text-brand-300">({{ membership.sisaHari }} hari lagi)</span>
         </p>
         <p v-else-if="membership" class="text-rose-300 font-semibold">
-          Kadaluarsa sejak {{ formatTanggal(membership.berakhir) }}
+          Kadaluarsa sejak {{ tanggalID(membership.berakhir) }}
         </p>
         <p v-else class="text-slate-400">
           Belum ada membership — perpanjangan ini akan menjadi aktivasi pertamamu.
@@ -115,30 +139,25 @@ async function submit() {
               @click="durasi = o.id"
             >
               <p class="font-display text-lg font-bold text-white">{{ o.label }}</p>
-              <p class="mt-1 font-display text-2xl font-extrabold text-white">
-                Rp {{ o.harga.toLocaleString('id-ID') }}
-              </p>
-              <p class="text-xs text-slate-500 mt-1">≈ Rp {{ o.perBulan.toLocaleString('id-ID') }}/bln</p>
+              <p class="mt-1 font-display text-2xl font-extrabold text-white">{{ rupiah(o.harga) }}</p>
+              <p class="text-xs text-slate-500 mt-1">≈ {{ rupiah(o.perBulan) }}/bln</p>
               <span v-if="o.hemat" class="absolute top-3 right-3 chip-accent">{{ o.hemat }}</span>
             </button>
           </div>
         </div>
 
-        <div class="rounded-2xl bg-ink-800/60 border border-white/[0.06] p-5">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-slate-400">Subtotal</span>
-            <span class="font-display text-xl font-bold text-white">Rp {{ selected.harga.toLocaleString('id-ID') }}</span>
-          </div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-slate-400">Service fee</span>
-            <span class="text-sm text-brand-300 font-semibold">GRATIS</span>
-          </div>
-          <div class="border-t border-white/[0.08] mt-3 pt-3 flex items-center justify-between">
-            <span class="font-semibold text-white">Total</span>
-            <span class="font-display text-2xl font-extrabold text-brand-400">
-              Rp {{ selected.harga.toLocaleString('id-ID') }}
-            </span>
-          </div>
+        <PaymentInfo :nominal="selected.harga" />
+
+        <div>
+          <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">Bukti transfer</label>
+          <BuktiTransferUpload v-model="buktiTransfer" />
+        </div>
+
+        <div>
+          <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">
+            Catatan <span class="text-slate-600 normal-case tracking-normal">(opsional)</span>
+          </label>
+          <input v-model="catatan" maxlength="255" class="input" placeholder="mis. transfer a/n Budi Santoso">
         </div>
 
         <div
@@ -148,13 +167,9 @@ async function submit() {
           {{ errorMsg }}
         </div>
 
-        <button :disabled="loading" class="btn-primary w-full" @click="submit">
-          <span v-if="!loading">Konfirmasi Perpanjangan</span>
-          <span v-else>Memproses…</span>
+        <button :disabled="loading" class="btn-primary w-full" @click="ajukan">
+          {{ loading ? 'Mengirim…' : 'Kirim Bukti & Ajukan Perpanjangan' }}
         </button>
-        <p class="text-xs text-center text-slate-500">
-          Demo — pembayaran belum terhubung. Membership langsung diperbarui.
-        </p>
       </div>
     </div>
   </section>
