@@ -40,11 +40,9 @@ const features = [
   },
 ]
 
-const featuredKelas = [
-  { nama: 'Yoga Flow', tag: 'Mind & Body', slug: 'yoga' },
-  { nama: 'Reformer Pilates', tag: 'Core Strength', slug: 'pilates' },
-  { nama: 'HIIT Burn', tag: 'Cardio', slug: 'hiit' },
-]
+// Kelas populer diambil dari database — 3 kelas teratas.
+const { data: kelasData } = await useFetch('/api/classes')
+const featuredKelas = computed(() => (kelasData.value?.data ?? []).slice(0, 3))
 </script>
 
 <template>
@@ -160,7 +158,7 @@ const featuredKelas = [
   </section>
 
   <!-- FEATURED KELAS -->
-  <section class="py-10">
+  <section v-if="featuredKelas.length" class="py-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-end justify-between mb-8">
         <div>
@@ -173,18 +171,19 @@ const featuredKelas = [
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <NuxtLink
           v-for="k in featuredKelas"
-          :key="k.slug"
-          :to="`/kelas/${k.slug}/daftar`"
+          :key="k.id"
+          :to="`/kelas/${k.id}/daftar`"
           class="card-hover overflow-hidden group"
         >
           <div class="relative aspect-[5/3] bg-gradient-to-br from-brand-500/30 via-brand-700/20 to-ink-900 overflow-hidden">
             <div class="absolute inset-0 bg-noise opacity-[0.05] mix-blend-overlay" />
             <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(34,211,238,0.38),transparent_60%)]" />
-            <span class="absolute top-3 left-3 chip-accent">{{ k.tag }}</span>
+            <span class="absolute top-3 left-3 chip-accent">{{ k.kategori }}</span>
           </div>
           <div class="p-5">
             <h3 class="font-display text-lg font-bold text-white">{{ k.nama }}</h3>
-            <p class="mt-2 inline-flex items-center gap-1 text-sm text-brand-300 group-hover:gap-2 transition-all">
+            <p class="text-xs text-slate-500 mt-0.5">w/ {{ k.instrukturNama ?? 'Pelatih segera diumumkan' }}</p>
+            <p class="mt-3 inline-flex items-center gap-1 text-sm text-brand-300 group-hover:gap-2 transition-all">
               Daftar kelas
               <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg>
             </p>

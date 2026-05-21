@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, mysqlEnum, timestamp, date, boolean } from 'drizzle-orm/mysql-core'
+import { mysqlTable, int, varchar, mysqlEnum, timestamp, date, boolean, unique } from 'drizzle-orm/mysql-core'
 
 /**
  * Tabel users — menyimpan akun untuk semua role:
@@ -94,9 +94,29 @@ export const classes = mysqlTable('classes', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+/**
+ * Tabel bookings — reservasi member untuk sebuah kelas.
+ * Satu baris = satu member terdaftar pada satu kelas (slot terpakai).
+ * - Booking  -> insert baris
+ * - Batal    -> hapus baris
+ * Unique (class_id, user_id): satu member maksimal satu reservasi per kelas.
+ * Relasi ke classes & users dijaga di level aplikasi.
+ */
+export const bookings = mysqlTable('bookings', {
+  id: int('id').autoincrement().primaryKey(),
+  classId: int('class_id').notNull(),
+  userId: int('user_id').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, t => [
+  unique('bookings_class_user_unique').on(t.classId, t.userId),
+])
+
 export type Instructor = typeof instructors.$inferSelect
 export type NewInstructor = typeof instructors.$inferInsert
 
 export type GymClass = typeof classes.$inferSelect
 export type NewGymClass = typeof classes.$inferInsert
 export type KategoriKelas = GymClass['kategori']
+
+export type Booking = typeof bookings.$inferSelect
+export type NewBooking = typeof bookings.$inferInsert

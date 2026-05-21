@@ -12,6 +12,7 @@
     "db:create": "node scripts/create-database.mjs",
     "db:migrate-qr": "node scripts/migrate-qr.mjs",
     "db:migrate-admin": "node scripts/migrate-admin.mjs",
+    "db:migrate-bookings": "node scripts/migrate-bookings.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx server/database/seed.ts"

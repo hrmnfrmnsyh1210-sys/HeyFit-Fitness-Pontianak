@@ -48,8 +48,8 @@ async function handleLogout() {
       <div class="absolute top-1/3 -right-32 h-[420px] w-[420px] rounded-full bg-accent-500/10 blur-3xl" />
     </div>
 
-    <!-- header -->
-    <header class="sticky top-0 z-40 border-b border-white/[0.06] bg-ink-950/70 backdrop-blur-xl">
+    <!-- header — fixed (tidak bergerak) & dominan cyan -->
+    <header class="fixed top-0 inset-x-0 z-40 border-b border-brand-400/25 bg-gradient-to-r from-brand-950/95 via-brand-800/90 to-brand-950/95 backdrop-blur-xl shadow-[0_12px_40px_-14px_rgba(6,182,212,0.55)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-6">
         <NuxtLink to="/" class="flex items-center gap-2.5 group">
           <img
@@ -67,8 +67,8 @@ async function handleLogout() {
             v-for="link in memberLinks"
             :key="link.to"
             :to="link.to"
-            class="px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition"
-            active-class="!text-brand-300"
+            class="px-3 py-2 rounded-lg text-brand-100/75 hover:text-white hover:bg-white/[0.08] transition"
+            active-class="!text-white bg-brand-400/15"
           >
             {{ link.label }}
           </NuxtLink>
@@ -81,8 +81,8 @@ async function handleLogout() {
               v-for="link in staffLinks"
               :key="link.to"
               :to="link.to"
-              class="px-2.5 py-1.5 rounded-md text-slate-500 hover:text-brand-300 transition"
-              active-class="!text-brand-300"
+              class="px-2.5 py-1.5 rounded-md text-brand-200/65 hover:text-white transition"
+              active-class="!text-white"
             >
               {{ link.label }}
             </NuxtLink>
@@ -120,7 +120,7 @@ async function handleLogout() {
           </template>
 
           <button
-            class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-white/10 text-slate-200"
+            class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-brand-400/30 text-white hover:bg-white/[0.08] transition"
             aria-label="Menu"
             @click="mobileOpen = !mobileOpen"
           >
@@ -137,7 +137,7 @@ async function handleLogout() {
         leave-active-class="transition duration-150"
         leave-to-class="opacity-0 -translate-y-2"
       >
-        <div v-if="mobileOpen" class="md:hidden border-t border-white/[0.06] bg-ink-950/95 backdrop-blur-xl">
+        <div v-if="mobileOpen" class="md:hidden border-t border-brand-400/15 bg-gradient-to-b from-brand-950/97 to-brand-900/95 backdrop-blur-xl">
           <div class="px-4 py-4 space-y-1">
             <NuxtLink
               v-for="link in memberLinks"
@@ -195,7 +195,7 @@ async function handleLogout() {
       </Transition>
     </header>
 
-    <main class="flex-1">
+    <main class="flex-1 pt-16">
       <slot />
     </main>
 

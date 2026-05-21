@@ -1,42 +1,29 @@
 <script setup lang="ts">
 useHead({ title: 'Kelas — Heyfit' })
 
-interface Kelas {
-  slug: string
-  nama: string
-  kategori: 'Mind & Body' | 'Cardio' | 'Strength' | 'Dance'
-  instruktur: string
-  jadwal: string
-  durasi: string
-  kuota: number
-  terisi: number
-  intensitas: 1 | 2 | 3
-}
+type Kategori = 'Mind & Body' | 'Cardio' | 'Strength' | 'Dance'
 
-const kelas: Kelas[] = [
-  { slug: 'yoga', nama: 'Yoga Flow', kategori: 'Mind & Body', instruktur: 'Sari Putri', jadwal: 'Sen & Rab · 18:00', durasi: '60 min', kuota: 15, terisi: 9, intensitas: 1 },
-  { slug: 'pilates', nama: 'Reformer Pilates', kategori: 'Mind & Body', instruktur: 'Dini Anjani', jadwal: 'Sel & Kam · 19:00', durasi: '50 min', kuota: 12, terisi: 11, intensitas: 2 },
-  { slug: 'hiit', nama: 'HIIT Burn', kategori: 'Cardio', instruktur: 'Bayu Pratama', jadwal: 'Jum · 17:30', durasi: '45 min', kuota: 20, terisi: 15, intensitas: 3 },
-  { slug: 'zumba', nama: 'Zumba Party', kategori: 'Dance', instruktur: 'Mira Sanjaya', jadwal: 'Sab · 09:00', durasi: '60 min', kuota: 25, terisi: 18, intensitas: 2 },
-  { slug: 'strength', nama: 'Functional Strength', kategori: 'Strength', instruktur: 'Reza Hakim', jadwal: 'Sen, Rab, Jum · 06:30', durasi: '55 min', kuota: 16, terisi: 7, intensitas: 3 },
-  { slug: 'boxing', nama: 'Boxing Fundamentals', kategori: 'Cardio', instruktur: 'Coach Iwan', jadwal: 'Kam & Sab · 18:30', durasi: '60 min', kuota: 14, terisi: 14, intensitas: 3 },
-]
+// Data kelas diambil langsung dari database (tabel classes + instructors).
+const { data, pending } = await useFetch('/api/classes')
+const kelas = computed(() => data.value?.data ?? [])
 
-const filterKat = ref<Kelas['kategori'] | 'Semua'>('Semua')
-const kategoriList: (Kelas['kategori'] | 'Semua')[] = ['Semua', 'Mind & Body', 'Cardio', 'Strength', 'Dance']
+const filterKat = ref<Kategori | 'Semua'>('Semua')
+const kategoriList: (Kategori | 'Semua')[] = ['Semua', 'Mind & Body', 'Cardio', 'Strength', 'Dance']
 
 const filtered = computed(() =>
-  filterKat.value === 'Semua' ? kelas : kelas.filter(k => k.kategori === filterKat.value),
+  filterKat.value === 'Semua'
+    ? kelas.value
+    : kelas.value.filter(k => k.kategori === filterKat.value),
 )
 
-function bgFor(kategori: Kelas['kategori']) {
-  const map: Record<Kelas['kategori'], string> = {
+function bgFor(kategori: string) {
+  const map: Record<string, string> = {
     'Mind & Body': 'from-emerald-500/30 via-brand-700/20 to-ink-900',
     'Cardio': 'from-rose-500/30 via-orange-700/20 to-ink-900',
     'Strength': 'from-sky-500/30 via-indigo-700/20 to-ink-900',
     'Dance': 'from-fuchsia-500/30 via-purple-700/20 to-ink-900',
   }
-  return map[kategori]
+  return map[kategori] ?? 'from-brand-500/30 via-brand-700/20 to-ink-900'
 }
 </script>
 
@@ -71,11 +58,31 @@ function bgFor(kategori: Kelas['kategori']) {
       </button>
     </div>
 
+    <!-- loading -->
+    <div v-if="pending" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-for="i in 6" :key="i" class="card overflow-hidden">
+        <div class="aspect-[5/3] bg-white/5 animate-pulse" />
+        <div class="p-5 space-y-3">
+          <div class="h-5 w-32 bg-white/10 rounded animate-pulse" />
+          <div class="h-3 w-24 bg-white/10 rounded animate-pulse" />
+          <div class="h-9 w-full bg-white/10 rounded-full animate-pulse mt-4" />
+        </div>
+      </div>
+    </div>
+
+    <!-- kosong -->
+    <div v-else-if="!filtered.length" class="card p-12 text-center">
+      <p class="font-display text-xl font-bold text-white mb-1">Belum ada kelas</p>
+      <p class="text-slate-400 text-sm">
+        Belum ada kelas pada kategori ini. Coba kategori lain atau cek lagi nanti.
+      </p>
+    </div>
+
     <!-- grid -->
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <article
         v-for="k in filtered"
-        :key="k.slug"
+        :key="k.id"
         class="card-hover overflow-hidden flex flex-col group"
       >
         <div :class="['relative aspect-[5/3] bg-gradient-to-br overflow-hidden', bgFor(k.kategori)]">
@@ -88,7 +95,7 @@ function bgFor(kategori: Kelas['kategori']) {
           </div>
 
           <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-slate-300">
-            <span class="font-medium">{{ k.durasi }}</span>
+            <span class="font-medium">{{ k.durasiMenit }} min</span>
             <span :class="k.terisi >= k.kuota ? 'text-rose-300' : 'text-brand-300'">
               {{ k.terisi >= k.kuota ? 'Penuh' : `${k.kuota - k.terisi} slot tersisa` }}
             </span>
@@ -97,7 +104,10 @@ function bgFor(kategori: Kelas['kategori']) {
 
         <div class="p-5 flex-1 flex flex-col">
           <h3 class="font-display text-lg font-bold text-white">{{ k.nama }}</h3>
-          <p class="text-xs text-slate-500 mt-0.5">w/ {{ k.instruktur }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">
+            w/ {{ k.instrukturNama ?? 'Pelatih segera diumumkan' }}
+            <span v-if="k.instrukturSpesialisasi" class="text-brand-400/80"> · {{ k.instrukturSpesialisasi }}</span>
+          </p>
           <p class="text-sm text-slate-400 mt-3">{{ k.jadwal }}</p>
 
           <div class="mt-3 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -109,15 +119,15 @@ function bgFor(kategori: Kelas['kategori']) {
           </div>
 
           <NuxtLink
-            :to="`/kelas/${k.slug}/daftar`"
+            :to="`/kelas/${k.id}/daftar`"
             :class="[
               'mt-5 inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition',
               k.terisi >= k.kuota
-                ? 'border border-white/10 text-slate-500 cursor-not-allowed'
+                ? 'border border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                 : 'btn-primary',
             ]"
           >
-            {{ k.terisi >= k.kuota ? 'Daftar waitlist' : 'Daftar kelas' }}
+            {{ k.terisi >= k.kuota ? 'Lihat detail' : 'Daftar kelas' }}
           </NuxtLink>
         </div>
       </article>

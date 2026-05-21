@@ -32,17 +32,15 @@ const sisaPersen = computed(() => {
   return Math.max(0, Math.min(100, Math.round((m.sisaHari / total) * 100)))
 })
 
+// Kelas yang sudah dibooking member — diambil dari database.
+const { data: bookingData } = await useFetch('/api/member/bookings')
+const bookings = computed(() => bookingData.value?.data ?? [])
+
 // ─── Data contoh (belum DB-backed) ───────────────────────────
 const statsContoh = [
   { label: 'Kelas bulan ini', value: '8' },
   { label: 'Total kelas', value: '47' },
   { label: 'Streak', value: '12 hari' },
-]
-
-const jadwalContoh = [
-  { nama: 'Yoga Flow', tanggal: 'Hari ini', jam: '18:00', instruktur: 'Sari Putri' },
-  { nama: 'HIIT Burn', tanggal: 'Besok', jam: '17:30', instruktur: 'Bayu Pratama' },
-  { nama: 'Reformer Pilates', tanggal: 'Jum, 23 Mei', jam: '19:00', instruktur: 'Dini Anjani' },
 ]
 </script>
 
@@ -191,27 +189,35 @@ const jadwalContoh = [
       </div>
     </div>
 
-    <!-- JADWAL KELAS (contoh) -->
+    <!-- KELAS YANG SUDAH DIBOOKING -->
     <div class="card p-6 mt-4">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-display text-lg font-bold text-white">Kelas Mendatang</h2>
-        <span class="chip">Data contoh</span>
+        <h2 class="font-display text-lg font-bold text-white">Kelas yang Kamu Booking</h2>
+        <span class="chip">{{ bookings.length }} kelas</span>
       </div>
-      <ul class="divide-y divide-white/[0.06]">
-        <li v-for="k in jadwalContoh" :key="k.nama + k.tanggal" class="py-3 flex items-center gap-4">
+
+      <ul v-if="bookings.length" class="divide-y divide-white/[0.06]">
+        <li v-for="b in bookings" :key="b.bookingId" class="py-3 flex items-center gap-4">
           <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500/30 to-ink-900 border border-white/10 flex items-center justify-center text-brand-300 font-bold shrink-0">
-            {{ k.nama.charAt(0) }}
+            {{ b.nama.charAt(0) }}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm text-white font-medium truncate">{{ k.nama }}</p>
-            <p class="text-xs text-slate-500">w/ {{ k.instruktur }}</p>
+            <p class="text-sm text-white font-medium truncate">{{ b.nama }}</p>
+            <p class="text-xs text-slate-500">
+              w/ {{ b.instrukturNama ?? 'Pelatih segera diumumkan' }} · {{ b.kategori }}
+            </p>
           </div>
           <div class="text-right shrink-0">
-            <p class="text-sm text-white">{{ k.tanggal }}</p>
-            <p class="text-xs text-slate-500">{{ k.jam }}</p>
+            <p class="text-sm text-white">{{ b.jadwal }}</p>
+            <p class="text-xs text-slate-500">{{ b.durasiMenit }} menit</p>
           </div>
         </li>
       </ul>
+
+      <div v-else class="py-8 text-center">
+        <p class="text-sm text-slate-400 mb-3">Kamu belum booking kelas apa pun.</p>
+        <NuxtLink to="/kelas" class="btn-primary">Cari kelas</NuxtLink>
+      </div>
     </div>
   </section>
 </template>

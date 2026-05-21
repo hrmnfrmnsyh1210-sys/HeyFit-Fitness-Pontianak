@@ -34,11 +34,6 @@ async function tableExists(table) {
   return rows.length > 0
 }
 
-async function rowCount(table) {
-  const [rows] = await conn.query(`SELECT COUNT(*) AS n FROM \`${table}\``)
-  return Number(rows[0]?.n ?? 0)
-}
-
 // 1) Tabel instructors
 if (await tableExists('instructors')) {
   console.log('  ↻ tabel instructors sudah ada — dilewati')
@@ -79,41 +74,66 @@ else {
   console.log('  ✓ tabel classes dibuat')
 }
 
-// 3) Data contoh — hanya kalau tabel masih kosong
-if (await rowCount('instructors') === 0) {
+// 3) Data contoh — idempoten berdasarkan nama. Aman dijalankan berulang:
+//    instruktur/kelas baru ditambah kalau belum ada, kelas tanpa pelatih
+//    di-backfill. Data yang sudah diubah admin tidak disentuh.
+const SEED_INSTRUCTORS = [
+  ['Sari Putri', 'Yoga & Mobility', 'Instruktur yoga bersertifikasi RYT-500 dengan pengalaman 8 tahun.'],
+  ['Dini Anjani', 'Pilates & Core', 'Spesialis reformer pilates dan latihan penguatan core.'],
+  ['Bayu Pratama', 'HIIT & Conditioning', 'Spesialis latihan interval intensitas tinggi dan strength conditioning.'],
+  ['Mira Sanjaya', 'Dance & Cardio', 'Koreografer Zumba dan kelas dance cardio.'],
+  ['Reza Hakim', 'Functional Strength', 'Pelatih kekuatan fungsional dan powerlifting.'],
+  ['Iwan Setiawan', 'Boxing & Combat', 'Mantan atlet tinju amatir, pelatih boxing fundamentals.'],
+]
+
+// nama, kategori, instruktur, jadwal, durasi_menit, kuota, intensitas
+const SEED_CLASSES = [
+  ['Yoga Flow', 'Mind & Body', 'Sari Putri', 'Sen & Rab · 18:00', 60, 15, 1],
+  ['Reformer Pilates', 'Mind & Body', 'Dini Anjani', 'Sel & Kam · 19:00', 50, 12, 2],
+  ['HIIT Burn', 'Cardio', 'Bayu Pratama', 'Jum · 17:30', 45, 20, 3],
+  ['Zumba Party', 'Dance', 'Mira Sanjaya', 'Sab · 09:00', 60, 25, 2],
+  ['Functional Strength', 'Strength', 'Reza Hakim', 'Sen, Rab, Jum · 06:30', 55, 16, 3],
+  ['Boxing Fundamentals', 'Cardio', 'Iwan Setiawan', 'Kam & Sab · 18:30', 60, 14, 3],
+]
+
+// Instruktur — tambah yang belum ada (dicocokkan berdasarkan nama).
+for (const [nama, spesialisasi, bio] of SEED_INSTRUCTORS) {
+  const [exist] = await conn.query('SELECT id FROM `instructors` WHERE `nama` = ? LIMIT 1', [nama])
+  if (exist.length) continue
   await conn.query(
-    `INSERT INTO \`instructors\` (\`nama\`, \`spesialisasi\`, \`bio\`) VALUES ?`,
-    [[
-      ['Sari Putri', 'Yoga & Mobility', 'Instruktur yoga bersertifikasi RYT-500 dengan pengalaman 8 tahun.'],
-      ['Bayu Pratama', 'HIIT & Conditioning', 'Spesialis latihan interval intensitas tinggi dan strength conditioning.'],
-      ['Mira Sanjaya', 'Dance & Cardio', 'Koreografer Zumba dan kelas dance cardio.'],
-      ['Reza Hakim', 'Functional Strength', 'Pelatih kekuatan fungsional dan powerlifting.'],
-    ]],
+    'INSERT INTO `instructors` (`nama`, `spesialisasi`, `bio`) VALUES (?, ?, ?)',
+    [nama, spesialisasi, bio],
   )
-  console.log('  ✓ 4 instruktur contoh dimasukkan')
-}
-else {
-  console.log('  ↻ instructors sudah berisi data — seed dilewati')
+  console.log(`  ✓ instruktur ditambahkan: ${nama}`)
 }
 
-if (await rowCount('classes') === 0) {
-  const [instr] = await conn.query('SELECT id, nama FROM `instructors` ORDER BY id')
-  const idOf = nama => instr.find(i => i.nama === nama)?.id ?? null
-  await conn.query(
-    `INSERT INTO \`classes\`
-      (\`nama\`, \`kategori\`, \`instructor_id\`, \`jadwal\`, \`durasi_menit\`, \`kuota\`, \`intensitas\`)
-     VALUES ?`,
-    [[
-      ['Yoga Flow', 'Mind & Body', idOf('Sari Putri'), 'Sen & Rab · 18:00', 60, 15, 1],
-      ['HIIT Burn', 'Cardio', idOf('Bayu Pratama'), 'Jum · 17:30', 45, 20, 3],
-      ['Zumba Party', 'Dance', idOf('Mira Sanjaya'), 'Sab · 09:00', 60, 25, 2],
-      ['Functional Strength', 'Strength', idOf('Reza Hakim'), 'Sen, Rab, Jum · 06:30', 55, 16, 3],
-    ]],
+// Peta nama instruktur -> id (untuk relasi ke kelas).
+const [allInstr] = await conn.query('SELECT id, nama FROM `instructors`')
+const instrIdOf = nama => allInstr.find(i => i.nama === nama)?.id ?? null
+
+// Kelas — tambah yang belum ada; backfill instruktur untuk kelas tanpa pelatih.
+for (const [nama, kategori, instruktur, jadwal, durasi, kuota, intensitas] of SEED_CLASSES) {
+  const instructorId = instrIdOf(instruktur)
+  const [exist] = await conn.query(
+    'SELECT id, instructor_id FROM `classes` WHERE `nama` = ? LIMIT 1',
+    [nama],
   )
-  console.log('  ✓ 4 kelas contoh dimasukkan')
-}
-else {
-  console.log('  ↻ classes sudah berisi data — seed dilewati')
+  if (!exist.length) {
+    await conn.query(
+      `INSERT INTO \`classes\`
+        (\`nama\`, \`kategori\`, \`instructor_id\`, \`jadwal\`, \`durasi_menit\`, \`kuota\`, \`intensitas\`)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [nama, kategori, instructorId, jadwal, durasi, kuota, intensitas],
+    )
+    console.log(`  ✓ kelas ditambahkan: ${nama} (pelatih: ${instruktur})`)
+  }
+  else if (exist[0].instructor_id == null && instructorId != null) {
+    await conn.query(
+      'UPDATE `classes` SET `instructor_id` = ? WHERE `id` = ?',
+      [instructorId, exist[0].id],
+    )
+    console.log(`  ✓ pelatih di-set untuk kelas: ${nama} -> ${instruktur}`)
+  }
 }
 
 await conn.end()
