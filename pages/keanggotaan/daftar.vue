@@ -1,24 +1,16 @@
 <script setup lang="ts">
-useHead({ title: 'Daftar Member — Heyfit' })
+useHead({ title: 'Aktivasi Membership — Heyfit' })
 
-type Paket = 'bulanan' | '3bulan' | 'tahunan'
+const { loggedIn } = useUserSession()
+const route = useRoute()
 
-interface MemberForm {
-  nama: string
-  email: string
-  telepon: string
-  paket: Paket
-}
-
-const form = reactive<MemberForm>({
-  nama: '',
-  email: '',
-  telepon: '',
-  paket: 'bulanan',
+// Overview hanya di-fetch kalau sudah login.
+const { data: overview, refresh } = await useFetch('/api/member/overview', {
+  immediate: loggedIn.value,
+  default: () => null,
 })
 
-const submitted = ref(false)
-const loading = ref(false)
+type Paket = 'bulanan' | '3bulan' | 'tahunan'
 
 const paketList: { id: Paket, label: string, harga: string, highlight?: boolean, perks: string[] }[] = [
   {
@@ -42,135 +34,145 @@ const paketList: { id: Paket, label: string, harga: string, highlight?: boolean,
   },
 ]
 
-function handleSubmit() {
+const pilihan = ref<Paket>('3bulan')
+const membership = computed(() => overview.value?.membership ?? null)
+const sudahAktif = computed(() => Boolean(membership.value?.aktif))
+
+function formatTanggal(str: string) {
+  return new Date(str).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+const loading = ref(false)
+const errorMsg = ref('')
+const submitted = ref(false)
+const result = ref<{ berakhir: string, sisaHari: number } | null>(null)
+
+async function aktivasi() {
+  errorMsg.value = ''
   loading.value = true
-  setTimeout(() => {
-    loading.value = false
+  try {
+    const res = await $fetch('/api/member/membership', {
+      method: 'POST',
+      body: { paket: pilihan.value },
+    })
+    result.value = res.membership
     submitted.value = true
-  }, 600)
+    await refresh()
+  }
+  catch (err) {
+    errorMsg.value = (err as { statusMessage?: string })?.statusMessage ?? 'Gagal aktivasi. Coba lagi.'
+  }
+  finally {
+    loading.value = false
+  }
 }
 </script>
 
 <template>
   <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
     <div class="text-center max-w-2xl mx-auto mb-12">
-      <p class="chip-accent mb-4">
-        <span class="glow-dot" />
-        7 hari trial gratis
-      </p>
+      <p class="chip-accent mb-4"><span class="glow-dot" />Mulai keanggotaanmu</p>
       <h1 class="font-display text-4xl sm:text-5xl font-extrabold text-white">
-        Pilih paket. <span class="text-gradient">Mulai hari ini.</span>
+        Pilih paket. <span class="text-gradient">Aktifkan sekarang.</span>
       </h1>
       <p class="mt-4 text-slate-400">
-        Tanpa biaya pendaftaran. Tanpa kontrak panjang. Batalkan kapan saja.
+        Tanpa biaya pendaftaran. Tanpa kontrak panjang.
       </p>
     </div>
 
-    <!-- pricing tiers -->
-    <div v-if="!submitted" class="grid md:grid-cols-3 gap-4 mb-12">
-      <button
-        v-for="p in paketList"
-        :key="p.id"
-        type="button"
-        :class="[
-          'card-hover p-6 text-left flex flex-col',
-          form.paket === p.id ? 'border-brand-400/60 bg-brand-400/[0.08] shadow-glow' : '',
-          p.highlight && form.paket !== p.id ? 'border-white/15' : '',
-        ]"
-        @click="form.paket = p.id"
-      >
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-display text-lg font-bold text-white">{{ p.label }}</h3>
-          <span v-if="p.highlight" class="chip-accent">Populer</span>
-        </div>
-        <p class="font-display text-3xl font-extrabold text-white">{{ p.harga }}</p>
-        <ul class="mt-5 space-y-2 text-sm text-slate-400 flex-1">
-          <li v-for="perk in p.perks" :key="perk" class="flex items-start gap-2">
-            <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M16.704 5.296a1 1 0 010 1.408l-7.5 7.5a1 1 0 01-1.408 0l-3.5-3.5a1 1 0 011.408-1.408L8.5 12.092l6.796-6.796a1 1 0 011.408 0z" clip-rule="evenodd"/>
-            </svg>
-            {{ perk }}
-          </li>
-        </ul>
-        <div class="mt-6 flex items-center gap-2 text-xs text-slate-500">
-          <span :class="form.paket === p.id ? 'glow-dot' : 'h-1.5 w-1.5 rounded-full bg-white/20'" />
-          {{ form.paket === p.id ? 'Dipilih' : 'Klik untuk pilih' }}
-        </div>
-      </button>
-    </div>
-
-    <!-- form -->
-    <div v-if="!submitted" class="grid lg:grid-cols-5 gap-6">
-      <form class="lg:col-span-3 card p-6 lg:p-8 space-y-5" @submit.prevent="handleSubmit">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="font-display text-xl font-bold text-white">Data diri</h2>
-          <span class="chip">Step 2 / 2</span>
-        </div>
-
-        <div>
-          <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">Nama lengkap</label>
-          <input v-model="form.nama" required placeholder="Mis. Andi Saputra" class="input">
-        </div>
-        <div>
-          <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">Email</label>
-          <input v-model="form.email" type="email" required placeholder="kamu@email.com" class="input">
-        </div>
-        <div>
-          <label class="block text-xs uppercase tracking-widest text-slate-500 mb-2">No. Telepon</label>
-          <input v-model="form.telepon" required placeholder="081234567890" class="input">
-        </div>
-
-        <button type="submit" :disabled="loading" class="btn-primary w-full">
-          <span v-if="!loading">Daftar &amp; Mulai Trial</span>
-          <span v-else>Memproses…</span>
-        </button>
-        <p class="text-xs text-center text-slate-500">
-          Dengan mendaftar, kamu menyetujui Syarat &amp; Ketentuan Heyfit.
-        </p>
-      </form>
-
-      <aside class="lg:col-span-2 card p-6 lg:p-8">
-        <p class="chip mb-3">Ringkasan</p>
-        <h3 class="font-display text-xl font-bold text-white mb-4">
-          Paket {{ paketList.find(p => p.id === form.paket)?.label }}
-        </h3>
-        <div class="flex items-baseline justify-between py-3 border-b border-white/[0.06]">
-          <span class="text-sm text-slate-400">Harga paket</span>
-          <span class="font-display text-2xl font-extrabold text-white">
-            {{ paketList.find(p => p.id === form.paket)?.harga }}
-          </span>
-        </div>
-        <div class="flex items-baseline justify-between py-3 border-b border-white/[0.06]">
-          <span class="text-sm text-slate-400">Biaya pendaftaran</span>
-          <span class="font-semibold text-brand-300">GRATIS</span>
-        </div>
-        <div class="flex items-baseline justify-between py-3">
-          <span class="text-sm text-slate-400">Trial</span>
-          <span class="font-semibold text-white">7 hari</span>
-        </div>
-
-        <div class="mt-4 rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 text-xs text-slate-400">
-          <p class="text-white font-semibold mb-1">💡 Tahukah kamu?</p>
-          Member tahunan rata-rata berolahraga 3x lebih sering dibanding paket bulanan.
-        </div>
-      </aside>
-    </div>
-
-    <!-- success -->
-    <div v-else class="max-w-xl mx-auto card p-10 text-center">
+    <!-- SUKSES -->
+    <div v-if="submitted && result" class="max-w-xl mx-auto card p-10 text-center">
       <div class="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-400/20 text-brand-300 shadow-glow">
         <svg class="w-7 h-7" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M16.704 5.296a1 1 0 010 1.408l-7.5 7.5a1 1 0 01-1.408 0l-3.5-3.5a1 1 0 011.408-1.408L8.5 12.092l6.796-6.796a1 1 0 011.408 0z" clip-rule="evenodd"/>
+          <path fill-rule="evenodd" d="M16.704 5.296a1 1 0 010 1.408l-7.5 7.5a1 1 0 01-1.408 0l-3.5-3.5a1 1 0 011.408-1.408L8.5 12.092l6.796-6.796a1 1 0 011.408 0z" clip-rule="evenodd" />
         </svg>
       </div>
-      <h2 class="font-display text-2xl font-extrabold text-white mb-2">Selamat datang, {{ form.nama }}!</h2>
+      <h2 class="font-display text-2xl font-extrabold text-white mb-2">Membership aktif!</h2>
       <p class="text-slate-400">
-        Trial 7 hari paket <span class="text-brand-300 font-semibold">{{ paketList.find(p => p.id === form.paket)?.label }}</span> sudah aktif.
-        Kami akan menghubungi {{ form.telepon }} untuk konfirmasi.
+        Berlaku sampai <span class="text-brand-300 font-semibold">{{ formatTanggal(result.berakhir) }}</span>
+        ({{ result.sisaHari }} hari).
       </p>
       <div class="mt-6 flex flex-wrap justify-center gap-3">
-        <NuxtLink to="/kelas" class="btn-primary">Booking kelas pertama</NuxtLink>
-        <NuxtLink to="/" class="btn-ghost">Kembali ke beranda</NuxtLink>
+        <NuxtLink to="/dashboard" class="btn-primary">Ke Dashboard</NuxtLink>
+        <NuxtLink to="/kelas" class="btn-ghost">Booking kelas</NuxtLink>
+      </div>
+    </div>
+
+    <!-- BELUM LOGIN -->
+    <div v-else-if="!loggedIn" class="max-w-xl mx-auto card p-8 text-center">
+      <h2 class="font-display text-xl font-bold text-white mb-2">Buat akun dulu</h2>
+      <p class="text-sm text-slate-400 mb-6">
+        Untuk mengaktifkan membership, kamu perlu akun Heyfit terlebih dahulu.
+      </p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <NuxtLink to="/register" class="btn-primary">Daftar Akun</NuxtLink>
+        <NuxtLink :to="`/login?redirect=${encodeURIComponent(route.fullPath)}`" class="btn-ghost">
+          Sudah punya akun
+        </NuxtLink>
+      </div>
+    </div>
+
+    <!-- SUDAH PUNYA MEMBERSHIP AKTIF -->
+    <div v-else-if="sudahAktif && membership" class="max-w-xl mx-auto card p-8 text-center border-brand-400/30 bg-brand-400/[0.05]">
+      <h2 class="font-display text-xl font-bold text-white mb-2">Membership-mu sudah aktif</h2>
+      <p class="text-sm text-slate-400 mb-6">
+        Paket {{ membership.paket }} berlaku sampai {{ formatTanggal(membership.berakhir) }}
+        ({{ membership.sisaHari }} hari lagi).
+      </p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <NuxtLink to="/dashboard" class="btn-primary">Ke Dashboard</NuxtLink>
+        <NuxtLink to="/keanggotaan/perpanjang" class="btn-ghost">Perpanjang</NuxtLink>
+      </div>
+    </div>
+
+    <!-- PILIH PAKET -->
+    <div v-else>
+      <div class="grid md:grid-cols-3 gap-4 mb-8">
+        <button
+          v-for="p in paketList"
+          :key="p.id"
+          type="button"
+          :class="[
+            'card-hover p-6 text-left flex flex-col',
+            pilihan === p.id ? 'border-brand-400/60 bg-brand-400/[0.08] shadow-glow' : '',
+            p.highlight && pilihan !== p.id ? 'border-white/15' : '',
+          ]"
+          @click="pilihan = p.id"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-display text-lg font-bold text-white">{{ p.label }}</h3>
+            <span v-if="p.highlight" class="chip-accent">Populer</span>
+          </div>
+          <p class="font-display text-3xl font-extrabold text-white">{{ p.harga }}</p>
+          <ul class="mt-5 space-y-2 text-sm text-slate-400 flex-1">
+            <li v-for="perk in p.perks" :key="perk" class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.704 5.296a1 1 0 010 1.408l-7.5 7.5a1 1 0 01-1.408 0l-3.5-3.5a1 1 0 011.408-1.408L8.5 12.092l6.796-6.796a1 1 0 011.408 0z" clip-rule="evenodd" />
+              </svg>
+              {{ perk }}
+            </li>
+          </ul>
+          <div class="mt-6 flex items-center gap-2 text-xs text-slate-500">
+            <span :class="pilihan === p.id ? 'glow-dot' : 'h-1.5 w-1.5 rounded-full bg-white/20'" />
+            {{ pilihan === p.id ? 'Dipilih' : 'Klik untuk pilih' }}
+          </div>
+        </button>
+      </div>
+
+      <div class="max-w-xl mx-auto">
+        <div
+          v-if="errorMsg"
+          class="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300"
+        >
+          {{ errorMsg }}
+        </div>
+        <button :disabled="loading" class="btn-primary w-full" @click="aktivasi">
+          <span v-if="!loading">Aktifkan Paket {{ paketList.find(p => p.id === pilihan)?.label }}</span>
+          <span v-else>Memproses…</span>
+        </button>
+        <p class="mt-3 text-xs text-center text-slate-500">
+          Demo — pembayaran belum terhubung. Membership langsung aktif setelah konfirmasi.
+        </p>
       </div>
     </div>
   </section>

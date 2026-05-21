@@ -3,6 +3,17 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss', 'nuxt-auth-utils'],
+  runtimeConfig: {
+    session: {
+      // Session bertahan 7 hari.
+      maxAge: 60 * 60 * 24 * 7,
+      cookie: {
+        // Di dev (http://localhost) cookie 'secure' tidak terkirim;
+        // di production (https) tetap secure.
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   typescript: {
     strict: true,
     typeCheck: false,

@@ -14,7 +14,7 @@ function destinationFor(role: 'member' | 'admin' | 'owner') {
   if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect
   if (role === 'owner') return '/owner'
   if (role === 'admin') return '/admin'
-  return '/'
+  return '/dashboard'
 }
 
 // Kalau sudah login, langsung arahkan keluar dari halaman login.

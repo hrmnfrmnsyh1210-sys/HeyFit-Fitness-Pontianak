@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, mysqlEnum, timestamp } from 'drizzle-orm/mysql-core'
+import { mysqlTable, int, varchar, mysqlEnum, timestamp, date } from 'drizzle-orm/mysql-core'
 
 /**
  * Tabel users — menyimpan akun untuk semua role:
@@ -16,6 +16,28 @@ export const users = mysqlTable('users', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+/**
+ * Tabel memberships — status keanggotaan tiap user.
+ * Satu user punya maksimal satu baris (userId unik):
+ * - Aktivasi  -> insert baris baru
+ * - Perpanjang -> update tanggal berakhir
+ * Relasi ke users dijaga di level aplikasi (userId selalu dari session).
+ */
+export const memberships = mysqlTable('memberships', {
+  id: int('id').autoincrement().primaryKey(),
+  userId: int('user_id').notNull().unique(),
+  paket: mysqlEnum('paket', ['bulanan', '3bulan', 'tahunan']).notNull(),
+  mulai: date('mulai', { mode: 'string' }).notNull(),
+  berakhir: date('berakhir', { mode: 'string' }).notNull(),
+  status: mysqlEnum('status', ['aktif', 'kadaluarsa']).notNull().default('aktif'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow(),
+})
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Role = User['role']
+
+export type Membership = typeof memberships.$inferSelect
+export type NewMembership = typeof memberships.$inferInsert
+export type Paket = Membership['paket']

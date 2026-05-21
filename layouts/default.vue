@@ -85,7 +85,11 @@ async function handleLogout() {
 
           <!-- logged in -->
           <template v-if="loggedIn && user">
-            <div class="hidden sm:flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-3">
+            <NuxtLink
+              to="/dashboard"
+              class="hidden sm:flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-3 hover:border-brand-400/50 transition"
+              active-class="!border-brand-400/60"
+            >
               <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-700 text-ink-950 text-xs font-bold">
                 {{ user.nama.charAt(0).toUpperCase() }}
               </span>
@@ -93,7 +97,7 @@ async function handleLogout() {
                 <span class="text-white font-semibold">{{ user.nama.split(' ')[0] }}</span>
                 <span class="text-slate-500"> · {{ roleLabel[user.role] }}</span>
               </span>
-            </div>
+            </NuxtLink>
             <button class="btn-ghost !py-2 !px-3.5 text-xs" @click="handleLogout">
               Keluar
             </button>
@@ -158,6 +162,13 @@ async function handleLogout() {
                 <p class="px-3 py-1 text-xs text-slate-400">
                   Masuk sebagai <span class="text-white font-semibold">{{ user.nama }}</span> ({{ roleLabel[user.role] }})
                 </p>
+                <NuxtLink
+                  to="/dashboard"
+                  class="block px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.04]"
+                  active-class="!text-brand-300 bg-white/[0.04]"
+                >
+                  Dashboard
+                </NuxtLink>
                 <button
                   class="w-full text-left px-3 py-2 rounded-lg text-rose-300 hover:bg-white/[0.04]"
                   @click="handleLogout"

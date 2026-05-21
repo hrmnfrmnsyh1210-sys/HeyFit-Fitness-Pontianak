@@ -22,7 +22,7 @@ async function handleRegister() {
       body: { nama: nama.value, email: email.value, password: password.value },
     })
     await refreshSession()
-    await navigateTo('/')
+    await navigateTo('/dashboard')
   }
   catch (err) {
     errorMsg.value = (err as { statusMessage?: string })?.statusMessage ?? 'Gagal mendaftar. Coba lagi.'
