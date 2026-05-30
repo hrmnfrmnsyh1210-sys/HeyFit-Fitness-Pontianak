@@ -43,6 +43,29 @@ const features = [
 // Kelas populer diambil dari database — 3 kelas teratas.
 const { data: kelasData } = await useFetch('/api/classes')
 const featuredKelas = computed(() => (kelasData.value?.data ?? []).slice(0, 3))
+
+// Galeri & berita Heyfit — 6 item terbaru yang ditampilkan admin.
+interface GalleryItem {
+  id: number
+  judul: string
+  kategori: string
+  ringkasan: string | null
+  konten: string | null
+  gambar: string
+  createdAt: string
+}
+const { data: galleryData } = await useFetch<{ data: GalleryItem[] }>('/api/gallery', {
+  query: { limit: 6 },
+  default: () => ({ data: [] }),
+})
+const galeri = computed(() => galleryData.value?.data ?? [])
+
+// Modal baca berita.
+const selectedBerita = ref<GalleryItem | null>(null)
+
+function formatTanggalBerita(iso: string) {
+  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+}
 </script>
 
 <template>
@@ -224,6 +247,77 @@ const featuredKelas = computed(() => (kelasData.value?.data ?? []).slice(0, 3))
       </div>
     </div>
   </section>
+
+  <!-- GALERI & BERITA -->
+  <section v-if="galeri.length" class="py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-end justify-between mb-8">
+        <div>
+          <p class="chip mb-3">Galeri &amp; Berita</p>
+          <h2 class="font-display text-3xl font-extrabold text-white">Kabar terbaru dari Heyfit</h2>
+          <p class="text-slate-400 mt-1">Momen, event, dan info terkini seputar komunitas kami.</p>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <button
+          v-for="g in galeri"
+          :key="g.id"
+          type="button"
+          class="card-hover overflow-hidden group text-left flex flex-col"
+          @click="selectedBerita = g"
+        >
+          <div class="relative aspect-[16/10] bg-black/40 overflow-hidden">
+            <img
+              :src="g.gambar"
+              :alt="g.judul"
+              class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            >
+            <span class="absolute top-3 left-3 chip-accent">{{ g.kategori }}</span>
+          </div>
+          <div class="p-5 flex flex-col flex-1">
+            <p class="text-[11px] text-slate-500">{{ formatTanggalBerita(g.createdAt) }}</p>
+            <h3 class="font-display text-lg font-bold text-white mt-1 line-clamp-2">{{ g.judul }}</h3>
+            <p class="text-sm text-slate-400 mt-2 line-clamp-2 flex-1">
+              {{ g.ringkasan || g.konten || '' }}
+            </p>
+            <p class="mt-4 inline-flex items-center gap-1 text-sm text-brand-300 group-hover:gap-2 transition-all">
+              Baca selengkapnya
+              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg>
+            </p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL BACA BERITA -->
+  <Teleport to="body">
+    <div v-if="selectedBerita" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-ink-950/80 backdrop-blur-sm" @click="selectedBerita = null" />
+      <div class="relative w-full max-w-2xl card overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="relative shrink-0">
+          <img :src="selectedBerita.gambar" :alt="selectedBerita.judul" class="w-full max-h-[45vh] object-cover">
+          <button
+            type="button"
+            class="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-ink-950/70 backdrop-blur text-slate-200 hover:text-white transition"
+            @click="selectedBerita = null"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="absolute bottom-3 left-3 chip-accent">{{ selectedBerita.kategori }}</span>
+        </div>
+        <div class="p-6 overflow-y-auto">
+          <p class="text-[11px] text-slate-500">{{ formatTanggalBerita(selectedBerita.createdAt) }}</p>
+          <h3 class="font-display text-2xl font-extrabold text-white mt-1">{{ selectedBerita.judul }}</h3>
+          <p v-if="selectedBerita.ringkasan" class="text-slate-300 mt-3">{{ selectedBerita.ringkasan }}</p>
+          <p v-if="selectedBerita.konten" class="text-slate-400 mt-3 whitespace-pre-line leading-relaxed">{{ selectedBerita.konten }}</p>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 
   <!-- CTA -->
   <section class="py-20">
