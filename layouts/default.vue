@@ -5,6 +5,7 @@ const memberLinks = [
   { to: '/', label: 'Home' },
   { to: '/kelas', label: 'Kelas' },
   { to: '/fasilitas', label: 'Fasilitas' },
+  { to: '/galeri', label: 'Galeri' },
   { to: '/keanggotaan/daftar', label: 'Daftar Member' },
 ]
 
@@ -213,6 +214,7 @@ async function handleLogout() {
           <ul class="space-y-2 text-slate-400">
             <li><NuxtLink to="/kelas" class="hover:text-brand-300">Kelas</NuxtLink></li>
             <li><NuxtLink to="/fasilitas" class="hover:text-brand-300">Fasilitas</NuxtLink></li>
+            <li><NuxtLink to="/galeri" class="hover:text-brand-300">Galeri &amp; Berita</NuxtLink></li>
             <li><NuxtLink to="/keanggotaan/perpanjang" class="hover:text-brand-300">Perpanjang Member</NuxtLink></li>
           </ul>
         </div>

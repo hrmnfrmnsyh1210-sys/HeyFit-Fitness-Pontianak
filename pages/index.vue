@@ -257,6 +257,7 @@ function formatTanggalBerita(iso: string) {
           <h2 class="font-display text-3xl font-extrabold text-white">Kabar terbaru dari Heyfit</h2>
           <p class="text-slate-400 mt-1">Momen, event, dan info terkini seputar komunitas kami.</p>
         </div>
+        <NuxtLink to="/galeri" class="hidden sm:inline-flex btn-ghost">Semua galeri</NuxtLink>
       </div>
 
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
