@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
       kuota: classes.kuota,
       intensitas: classes.intensitas,
       harga: classes.harga,
+      masaBerlakuHari: classes.masaBerlakuHari,
       aktif: classes.aktif,
       createdAt: classes.createdAt,
     })

@@ -16,7 +16,13 @@ export default defineEventHandler(async (event) => {
 
   const kelas = (
     await db
-      .select({ id: classes.id, harga: classes.harga, kuota: classes.kuota, aktif: classes.aktif })
+      .select({
+        id: classes.id,
+        harga: classes.harga,
+        kuota: classes.kuota,
+        aktif: classes.aktif,
+        masaBerlakuHari: classes.masaBerlakuHari,
+      })
       .from(classes)
       .where(eq(classes.id, id))
       .limit(1)
@@ -24,14 +30,17 @@ export default defineEventHandler(async (event) => {
   if (!kelas || !kelas.aktif)
     throw createError({ statusCode: 404, statusMessage: 'Kelas tidak ditemukan.' })
 
-  // Sudah terdaftar (booking terkonfirmasi)?
-  const sudah = await db
-    .select({ id: bookings.id })
-    .from(bookings)
-    .where(and(eq(bookings.classId, id), eq(bookings.userId, user.id)))
-    .limit(1)
-  if (sudah.length)
-    throw createError({ statusCode: 409, statusMessage: 'Kamu sudah terdaftar di kelas ini.' })
+  // Booking yang sudah ada (untuk cek aktif vs kedaluwarsa).
+  const existingBooking = (
+    await db
+      .select({ id: bookings.id, berlakuSampai: bookings.berlakuSampai })
+      .from(bookings)
+      .where(and(eq(bookings.classId, id), eq(bookings.userId, user.id)))
+      .limit(1)
+  )[0]
+  // Masih terdaftar & belum kedaluwarsa -> tidak bisa booking lagi.
+  if (existingBooking && bookingMasihAktif(existingBooking.berlakuSampai))
+    throw createError({ statusCode: 409, statusMessage: 'Kamu masih terdaftar aktif di kelas ini.' })
 
   // Sudah punya pengajuan yang menunggu?
   const pendingMine = await db
@@ -47,9 +56,15 @@ export default defineEventHandler(async (event) => {
   if (pendingMine.length)
     throw createError({ statusCode: 409, statusMessage: 'Pengajuan kelas ini masih menunggu konfirmasi.' })
 
-  // Kuota: booking terkonfirmasi + pengajuan yang menunggu.
+  // Kuota: booking aktif (belum kedaluwarsa) + pengajuan yang menunggu.
+  // Booking kedaluwarsa tidak lagi menahan slot.
   const terkonfirmasi = Number(
-    (await db.select({ n: count() }).from(bookings).where(eq(bookings.classId, id)))[0]?.n ?? 0,
+    (
+      await db
+        .select({ n: count() })
+        .from(bookings)
+        .where(and(eq(bookings.classId, id), bookingAktifCond()))
+    )[0]?.n ?? 0,
   )
   const menunggu = Number(
     (
@@ -66,15 +81,22 @@ export default defineEventHandler(async (event) => {
   if (terkonfirmasi + menunggu >= kelas.kuota)
     throw createError({ statusCode: 409, statusMessage: 'Kuota kelas sudah penuh.' })
 
-  // Kelas gratis -> langsung terdaftar.
+  // Kelas gratis -> langsung terdaftar (atau perpanjang booking lama yang habis).
   if (kelas.harga <= 0) {
-    try {
-      await db.insert(bookings).values({ classId: id, userId: user.id })
+    const berlakuSampai = computeBerlakuSampai(kelas.masaBerlakuHari)
+    if (existingBooking) {
+      // Booking lama sudah kedaluwarsa (yang aktif sudah ditolak di atas) -> perpanjang.
+      await db.update(bookings).set({ berlakuSampai }).where(eq(bookings.id, existingBooking.id))
     }
-    catch {
-      throw createError({ statusCode: 409, statusMessage: 'Kamu sudah terdaftar di kelas ini.' })
+    else {
+      try {
+        await db.insert(bookings).values({ classId: id, userId: user.id, berlakuSampai })
+      }
+      catch {
+        throw createError({ statusCode: 409, statusMessage: 'Kamu sudah terdaftar di kelas ini.' })
+      }
     }
-    return { ok: true, gratis: true }
+    return { ok: true, gratis: true, berlakuSampai }
   }
 
   // Kelas berbayar -> buat pengajuan pembayaran.

@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
 
       const kelas = (
         await db
-          .select({ id: classes.id, kuota: classes.kuota })
+          .select({ id: classes.id, kuota: classes.kuota, masaBerlakuHari: classes.masaBerlakuHari })
           .from(classes)
           .where(eq(classes.id, classId))
           .limit(1)
@@ -50,15 +50,28 @@ export default defineEventHandler(async (event) => {
       if (!kelas)
         throw createError({ statusCode: 404, statusMessage: 'Kelas tidak ditemukan.' })
 
-      // Buat booking kalau member belum terdaftar di kelas ini.
-      const sudah = await db
-        .select({ id: bookings.id })
-        .from(bookings)
-        .where(and(eq(bookings.classId, classId), eq(bookings.userId, payment.userId)))
-        .limit(1)
-      if (!sudah.length) {
+      const berlakuSampai = computeBerlakuSampai(kelas.masaBerlakuHari)
+
+      // Booking lama (kalau ada) -> perpanjang masa berlakunya.
+      const sudah = (
+        await db
+          .select({ id: bookings.id })
+          .from(bookings)
+          .where(and(eq(bookings.classId, classId), eq(bookings.userId, payment.userId)))
+          .limit(1)
+      )[0]
+      if (sudah) {
+        await db.update(bookings).set({ berlakuSampai }).where(eq(bookings.id, sudah.id))
+      }
+      else {
+        // Booking baru -> cek kuota berdasarkan booking yang masih aktif.
         const terisi = Number(
-          (await db.select({ n: count() }).from(bookings).where(eq(bookings.classId, classId)))[0]?.n ?? 0,
+          (
+            await db
+              .select({ n: count() })
+              .from(bookings)
+              .where(and(eq(bookings.classId, classId), bookingAktifCond()))
+          )[0]?.n ?? 0,
         )
         if (terisi >= kelas.kuota) {
           throw createError({
@@ -67,7 +80,7 @@ export default defineEventHandler(async (event) => {
           })
         }
         try {
-          await db.insert(bookings).values({ classId, userId: payment.userId })
+          await db.insert(bookings).values({ classId, userId: payment.userId, berlakuSampai })
         }
         catch {
           // Unique (class_id, user_id) — booking sudah ada, abaikan.

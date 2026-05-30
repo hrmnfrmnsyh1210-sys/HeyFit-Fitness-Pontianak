@@ -48,6 +48,7 @@ const quickActions = [
   { to: '/admin/scan', title: 'Scan QR Member', desc: 'Catat kehadiran member lewat scan QR.', emoji: '📷' },
   { to: '/admin/classes', title: 'Jadwal Kelas', desc: 'Atur kelas, jadwal & kuota.', emoji: '🗓️' },
   { to: '/admin/instructors', title: 'Instruktur', desc: 'Kelola data & status instruktur.', emoji: '🏋️' },
+  { to: '/admin/gallery', title: 'Galeri & Berita', desc: 'Unggah foto & berita seputar Heyfit.', emoji: '🖼️' },
 ]
 
 function timeAgo(iso: string) {

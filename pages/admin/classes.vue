@@ -13,6 +13,7 @@ interface ClassRow {
   kuota: number
   intensitas: number
   harga: number
+  masaBerlakuHari: number
   aktif: boolean
 }
 interface InstructorRow { id: number, nama: string, aktif: boolean }
@@ -43,6 +44,7 @@ const form = reactive({
   kuota: 15,
   intensitas: 2,
   harga: 50000,
+  masaBerlakuHari: 30,
   aktif: true,
 })
 
@@ -50,7 +52,7 @@ function openCreate() {
   editingId.value = null
   Object.assign(form, {
     nama: '', kategori: 'Mind & Body', instructorId: '', jadwal: '',
-    durasiMenit: 60, kuota: 15, intensitas: 2, harga: 50000, aktif: true,
+    durasiMenit: 60, kuota: 15, intensitas: 2, harga: 50000, masaBerlakuHari: 30, aktif: true,
   })
   formError.value = ''
   showForm.value = true
@@ -61,7 +63,7 @@ function openEdit(c: ClassRow) {
   Object.assign(form, {
     nama: c.nama, kategori: c.kategori, instructorId: c.instructorId ?? '',
     jadwal: c.jadwal, durasiMenit: c.durasiMenit, kuota: c.kuota,
-    intensitas: c.intensitas, harga: c.harga, aktif: c.aktif,
+    intensitas: c.intensitas, harga: c.harga, masaBerlakuHari: c.masaBerlakuHari, aktif: c.aktif,
   })
   formError.value = ''
   showForm.value = true
@@ -79,6 +81,7 @@ async function submitForm() {
     kuota: form.kuota,
     intensitas: form.intensitas,
     harga: form.harga,
+    masaBerlakuHari: form.masaBerlakuHari,
     aktif: form.aktif,
   }
   try {
@@ -201,6 +204,10 @@ async function hapusKelas(c: ClassRow) {
             <dt class="text-slate-500">Harga</dt>
             <dd class="text-slate-300">{{ c.harga > 0 ? rupiah(c.harga) : 'Gratis' }}</dd>
           </div>
+          <div class="flex justify-between gap-3">
+            <dt class="text-slate-500">Masa berlaku</dt>
+            <dd class="text-slate-300">{{ c.masaBerlakuHari > 0 ? `${c.masaBerlakuHari} hari` : 'Tanpa batas' }}</dd>
+          </div>
           <div class="flex justify-between gap-3 items-center">
             <dt class="text-slate-500">Intensitas</dt>
             <dd class="flex items-center gap-1">
@@ -285,10 +292,17 @@ async function hapusKelas(c: ClassRow) {
             </select>
           </div>
         </div>
-        <div>
-          <label class="text-xs uppercase tracking-widest text-slate-500">Harga booking (Rp)</label>
-          <input v-model.number="form.harga" type="number" min="0" step="1000" required class="input mt-1.5">
-          <p class="text-[11px] text-slate-500 mt-1">Isi 0 untuk kelas gratis (booking tanpa pembayaran).</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs uppercase tracking-widest text-slate-500">Harga booking (Rp)</label>
+            <input v-model.number="form.harga" type="number" min="0" step="1000" required class="input mt-1.5">
+            <p class="text-[11px] text-slate-500 mt-1">0 = kelas gratis.</p>
+          </div>
+          <div>
+            <label class="text-xs uppercase tracking-widest text-slate-500">Masa berlaku (hari)</label>
+            <input v-model.number="form.masaBerlakuHari" type="number" min="0" max="3650" required class="input mt-1.5">
+            <p class="text-[11px] text-slate-500 mt-1">0 = tanpa batas. Setelah lewat, member booking ulang.</p>
+          </div>
         </div>
         <label class="flex items-center gap-2.5 text-sm text-slate-300">
           <input v-model="form.aktif" type="checkbox" class="h-4 w-4 rounded border-white/20 bg-white/[0.03] accent-brand-400">

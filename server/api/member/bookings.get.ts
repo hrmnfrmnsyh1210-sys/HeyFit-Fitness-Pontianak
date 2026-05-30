@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
       jadwal: classes.jadwal,
       durasiMenit: classes.durasiMenit,
       instrukturNama: instructors.nama,
+      berlakuSampai: bookings.berlakuSampai,
       bookedAt: bookings.createdAt,
     })
     .from(bookings)
@@ -23,5 +24,12 @@ export default defineEventHandler(async (event) => {
     .where(eq(bookings.userId, user.id))
     .orderBy(desc(bookings.id))
 
-  return { data }
+  // Sertakan status & sisa hari supaya tampilan member bisa menandai yang habis.
+  const enriched = data.map(b => ({
+    ...b,
+    aktif: bookingMasihAktif(b.berlakuSampai),
+    sisaHari: b.berlakuSampai == null ? null : daysUntil(b.berlakuSampai),
+  }))
+
+  return { data: enriched }
 })

@@ -156,6 +156,20 @@ async function batalkan() {
           </div>
         </div>
 
+        <!-- info masa berlaku booking -->
+        <div
+          v-if="kelas.masaBerlakuHari > 0"
+          class="flex items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-slate-400"
+        >
+          <svg class="w-4 h-4 mt-0.5 shrink-0 text-brand-300" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p>
+            Booking ini berlaku <span class="text-white font-semibold">{{ kelas.masaBerlakuHari }} hari</span>
+            setelah dikonfirmasi. Setelah masa berlaku habis, kamu perlu booking &amp; bayar ulang untuk lanjut ikut kelas ini.
+          </p>
+        </div>
+
         <!-- progress slot -->
         <div>
           <div class="flex justify-between text-xs text-slate-500 mb-1.5">
@@ -194,6 +208,9 @@ async function batalkan() {
             <div>
               <p class="text-white font-semibold">Kamu sudah terdaftar</p>
               <p class="text-sm text-slate-400">Pembayaranmu sudah dikonfirmasi admin. Sampai jumpa di kelas!</p>
+              <p v-if="kelas.berlakuSampai" class="text-xs text-brand-300 mt-1">
+                Berlaku sampai {{ tanggalID(kelas.berlakuSampai) }}.
+              </p>
             </div>
           </div>
           <div class="mt-4 flex flex-wrap gap-3">

@@ -210,7 +210,7 @@ const statsContoh = [
       </div>
 
       <ul v-if="bookings.length" class="divide-y divide-white/[0.06]">
-        <li v-for="b in bookings" :key="b.bookingId" class="py-3 flex items-center gap-4">
+        <li v-for="b in bookings" :key="b.bookingId" :class="['py-3 flex items-center gap-4', !b.aktif && 'opacity-60']">
           <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500/30 to-ink-900 border border-white/10 flex items-center justify-center text-brand-300 font-bold shrink-0">
             {{ b.nama.charAt(0) }}
           </div>
@@ -218,6 +218,17 @@ const statsContoh = [
             <p class="text-sm text-white font-medium truncate">{{ b.nama }}</p>
             <p class="text-xs text-slate-500">
               w/ {{ b.instrukturNama ?? 'Pelatih segera diumumkan' }} · {{ b.kategori }}
+            </p>
+            <!-- status masa berlaku booking -->
+            <p v-if="b.berlakuSampai == null" class="text-[11px] text-slate-500 mt-0.5">
+              Berlaku tanpa batas
+            </p>
+            <p v-else-if="b.aktif" class="text-[11px] text-brand-300 mt-0.5">
+              Berlaku s/d {{ formatTanggal(b.berlakuSampai) }} · {{ b.sisaHari }} hari lagi
+            </p>
+            <p v-else class="text-[11px] text-rose-300 mt-0.5">
+              Kedaluwarsa {{ formatTanggal(b.berlakuSampai) }} —
+              <NuxtLink :to="`/kelas/${b.classId}/daftar`" class="underline hover:text-rose-200">booking ulang</NuxtLink>
             </p>
           </div>
           <div class="text-right shrink-0">

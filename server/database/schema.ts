@@ -92,6 +92,10 @@ export const classes = mysqlTable('classes', {
   intensitas: int('intensitas').notNull().default(2),
   // Harga sekali booking dalam rupiah. 0 = gratis.
   harga: int('harga').notNull().default(0),
+  // Masa berlaku booking dalam hari sejak dikonfirmasi. Setelah lewat,
+  // booking kedaluwarsa & member harus membayar/booking ulang.
+  // 0 = tanpa batas (booking berlaku selamanya).
+  masaBerlakuHari: int('masa_berlaku_hari').notNull().default(30),
   aktif: boolean('aktif').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
@@ -108,6 +112,9 @@ export const bookings = mysqlTable('bookings', {
   id: int('id').autoincrement().primaryKey(),
   classId: int('class_id').notNull(),
   userId: int('user_id').notNull(),
+  // Booking berlaku sampai tanggal ini (inklusif). null = tanpa batas.
+  // Diisi dari classes.masaBerlakuHari saat booking dikonfirmasi.
+  berlakuSampai: date('berlaku_sampai', { mode: 'string' }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, t => [
   unique('bookings_class_user_unique').on(t.classId, t.userId),
@@ -153,3 +160,31 @@ export const payments = mysqlTable('payments', {
 
 export type Payment = typeof payments.$inferSelect
 export type NewPayment = typeof payments.$inferInsert
+
+/**
+ * Tabel galleries — galeri foto / berita Heyfit.
+ * Dikelola lewat dashboard admin (/admin/gallery). Dibuat fleksibel:
+ * satu baris = satu kartu berita berisi judul, kategori bebas, ringkasan,
+ * isi berita opsional, dan satu foto.
+ * - Foto disimpan sebagai data URL base64 (kolom LONGTEXT di DB), sama
+ *   seperti bukti transfer — tanpa perlu storage file terpisah.
+ * - `tampil` mengatur apakah kartu ditampilkan ke pengunjung situs.
+ */
+export const galleries = mysqlTable('galleries', {
+  id: int('id').autoincrement().primaryKey(),
+  judul: varchar('judul', { length: 160 }).notNull(),
+  // Tag bebas supaya fleksibel, mis. "Berita", "Event", "Promo".
+  kategori: varchar('kategori', { length: 60 }).notNull().default('Berita'),
+  // Ringkasan/caption singkat untuk kartu.
+  ringkasan: varchar('ringkasan', { length: 300 }),
+  // Isi berita lengkap (opsional).
+  konten: text('konten'),
+  // Foto sebagai data URL base64.
+  gambar: text('gambar').notNull(),
+  tampil: boolean('tampil').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow(),
+})
+
+export type Gallery = typeof galleries.$inferSelect
+export type NewGallery = typeof galleries.$inferInsert

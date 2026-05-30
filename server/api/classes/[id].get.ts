@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
         kuota: classes.kuota,
         intensitas: classes.intensitas,
         harga: classes.harga,
+        masaBerlakuHari: classes.masaBerlakuHari,
         aktif: classes.aktif,
         instrukturNama: instructors.nama,
         instrukturSpesialisasi: instructors.spesialisasi,
@@ -37,7 +38,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Kelas tidak ditemukan.' })
 
   const terkonfirmasi = Number(
-    (await db.select({ n: count() }).from(bookings).where(eq(bookings.classId, id)))[0]?.n ?? 0,
+    (
+      await db
+        .select({ n: count() })
+        .from(bookings)
+        .where(and(eq(bookings.classId, id), bookingAktifCond()))
+    )[0]?.n ?? 0,
   )
   const menunggu = Number(
     (
@@ -53,16 +59,22 @@ export default defineEventHandler(async (event) => {
   )
 
   // Status booking user — hanya kalau sedang login.
+  // 'terdaftar' hanya untuk booking yang masih aktif; booking kedaluwarsa
+  // dianggap 'none' supaya member bisa booking ulang.
   let bookingStatus: 'none' | 'menunggu' | 'terdaftar' = 'none'
+  let berlakuSampai: string | null = null
   const session = await getUserSession(event)
   if (session?.user) {
-    const sudah = await db
-      .select({ id: bookings.id })
-      .from(bookings)
-      .where(and(eq(bookings.classId, id), eq(bookings.userId, session.user.id)))
-      .limit(1)
-    if (sudah.length) {
+    const sudah = (
+      await db
+        .select({ id: bookings.id, berlakuSampai: bookings.berlakuSampai })
+        .from(bookings)
+        .where(and(eq(bookings.classId, id), eq(bookings.userId, session.user.id)))
+        .limit(1)
+    )[0]
+    if (sudah && bookingMasihAktif(sudah.berlakuSampai)) {
       bookingStatus = 'terdaftar'
+      berlakuSampai = sudah.berlakuSampai
     }
     else {
       const pending = await db
@@ -79,5 +91,5 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { data: { ...row, terisi: terkonfirmasi + menunggu, bookingStatus } }
+  return { data: { ...row, terisi: terkonfirmasi + menunggu, bookingStatus, berlakuSampai } }
 })

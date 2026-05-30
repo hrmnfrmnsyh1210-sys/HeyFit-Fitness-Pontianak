@@ -27,10 +27,11 @@ export default defineEventHandler(async () => {
     .where(eq(classes.aktif, true))
     .orderBy(asc(classes.nama))
 
-  // Booking terkonfirmasi per kelas.
+  // Booking aktif (belum kedaluwarsa) per kelas.
   const bookingCounts = await db
     .select({ classId: bookings.classId, n: count() })
     .from(bookings)
+    .where(bookingAktifCond())
     .groupBy(bookings.classId)
 
   // Pengajuan pembayaran kelas yang masih menunggu konfirmasi.

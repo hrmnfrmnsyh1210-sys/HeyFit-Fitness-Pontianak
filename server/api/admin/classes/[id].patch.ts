@@ -57,6 +57,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Harga tidak valid.' })
     updates.harga = v
   }
+  if (body?.masaBerlakuHari !== undefined) {
+    const v = Number(body.masaBerlakuHari)
+    if (!Number.isInteger(v) || v < 0 || v > 3650)
+      throw createError({ statusCode: 400, statusMessage: 'Masa berlaku tidak valid (0–3650 hari).' })
+    updates.masaBerlakuHari = v
+  }
   if (body?.instructorId !== undefined) {
     const iid
       = body.instructorId == null || body.instructorId === '' ? null : Number(body.instructorId)

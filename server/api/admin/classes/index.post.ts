@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
   const kuota = Number(body?.kuota)
   const intensitas = Number(body?.intensitas)
   const harga = Number(body?.harga ?? 0)
+  const masaBerlakuHari = Number(body?.masaBerlakuHari ?? 30)
   const instructorId
     = body?.instructorId == null || body.instructorId === '' ? null : Number(body.instructorId)
 
@@ -33,6 +34,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Intensitas harus 1–3.' })
   if (!Number.isInteger(harga) || harga < 0)
     throw createError({ statusCode: 400, statusMessage: 'Harga tidak valid.' })
+  if (!Number.isInteger(masaBerlakuHari) || masaBerlakuHari < 0 || masaBerlakuHari > 3650)
+    throw createError({ statusCode: 400, statusMessage: 'Masa berlaku tidak valid (0–3650 hari).' })
 
   if (instructorId !== null) {
     if (!Number.isInteger(instructorId))
@@ -54,6 +57,7 @@ export default defineEventHandler(async (event) => {
     kuota,
     intensitas,
     harga,
+    masaBerlakuHari,
     instructorId,
     aktif: body?.aktif === undefined ? true : Boolean(body.aktif),
   })
