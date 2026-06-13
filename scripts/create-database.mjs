@@ -20,7 +20,8 @@ const conn = await mysql.createConnection({
   port: Number(TIDB_PORT ?? 4000),
   user: TIDB_USER,
   password: TIDB_PASSWORD,
-  ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
+  // MySQL lokal: set TIDB_SSL=false di .env untuk koneksi tanpa TLS.
+  ssl: process.env.TIDB_SSL === 'false' ? undefined : { minVersion: 'TLSv1.2', rejectUnauthorized: true },
 })
 
 await conn.query(`CREATE DATABASE IF NOT EXISTS \`${TIDB_DATABASE}\``)

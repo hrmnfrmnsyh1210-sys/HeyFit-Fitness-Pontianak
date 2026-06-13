@@ -32,7 +32,8 @@ async function main() {
     user: TIDB_USER,
     password: TIDB_PASSWORD,
     database: TIDB_DATABASE,
-    ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
+    // MySQL lokal: set TIDB_SSL=false di .env untuk koneksi tanpa TLS.
+    ssl: process.env.TIDB_SSL === 'false' ? undefined : { minVersion: 'TLSv1.2', rejectUnauthorized: true },
   })
   const db = drizzle(pool)
 

@@ -11,7 +11,10 @@ export default defineConfig({
     user: process.env.TIDB_USER!,
     password: process.env.TIDB_PASSWORD!,
     database: process.env.TIDB_DATABASE!,
+    // MySQL lokal: set TIDB_SSL=false di .env untuk koneksi tanpa TLS.
     // minVersion valid untuk mysql2 tapi belum ada di tipe SslOptions drizzle-kit.
-    ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true } as { rejectUnauthorized: boolean },
+    ssl: process.env.TIDB_SSL === 'false'
+      ? undefined
+      : { minVersion: 'TLSv1.2', rejectUnauthorized: true } as { rejectUnauthorized: boolean },
   },
 })

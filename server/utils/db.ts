@@ -33,8 +33,9 @@ export function useDb() {
     user: TIDB_USER,
     password: TIDB_PASSWORD,
     database: TIDB_DATABASE,
-    // TiDB Cloud Serverless mewajibkan TLS
-    ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
+    // TiDB Cloud Serverless mewajibkan TLS. Untuk MySQL lokal (XAMPP/Laragon)
+    // set TIDB_SSL=false di .env supaya koneksi tanpa TLS.
+    ssl: process.env.TIDB_SSL === 'false' ? undefined : { minVersion: 'TLSv1.2', rejectUnauthorized: true },
     connectionLimit: 5,
     enableKeepAlive: true,
   })
