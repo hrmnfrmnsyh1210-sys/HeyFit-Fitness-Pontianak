@@ -121,50 +121,12 @@ function formatTanggalBerita(iso: string) {
 
         <!-- visual side -->
         <div class="lg:col-span-5 relative">
-          <div class="relative aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-ink-800 to-ink-950 shadow-[0_30px_80px_-30px_rgba(34,211,238,0.45)]">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(34,211,238,0.45),transparent_55%)]" />
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_85%_90%,rgba(34,211,238,0.25),transparent_55%)]" />
-            <div class="absolute inset-0 bg-noise opacity-[0.05] mix-blend-overlay" />
-
-            <!-- grid lines deko -->
-            <div class="absolute inset-0 opacity-[0.08]" style="background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px); background-size: 40px 40px;" />
-
-            <!-- floating cards -->
-            <div class="absolute top-5 left-5 card px-4 py-3 animate-float">
-              <p class="text-[10px] uppercase tracking-widest text-slate-500">Heart rate</p>
-              <p class="font-display text-2xl font-extrabold text-white">142 <span class="text-xs text-brand-400 font-sans font-medium">bpm</span></p>
-            </div>
-
-            <div class="absolute top-5 right-5 card px-4 py-3 animate-float" style="animation-delay: -2s">
-              <p class="text-[10px] uppercase tracking-widest text-slate-500">Streak</p>
-              <p class="font-display text-2xl font-extrabold text-white">14 <span class="text-xs text-brand-400 font-sans font-medium">hari</span></p>
-            </div>
-
-            <!-- center badge -->
-            <div class="absolute inset-0 flex items-center justify-center">
-              <div class="relative">
-                <div class="absolute inset-0 rounded-full bg-brand-400/30 blur-2xl animate-pulse" />
-                <div class="relative h-24 w-24 rounded-full border border-brand-400/40 bg-ink-950/60 backdrop-blur flex items-center justify-center">
-                  <svg class="w-10 h-10 text-brand-300" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.5 6.5l11 11M3 10l4-4M10 3l4 4M14 21l-4-4M21 14l-4 4M5 9l1-1M9 5l1-1M15 19l1-1M19 15l1-1"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- bottom session card -->
-            <div class="absolute inset-x-5 bottom-5 card p-4">
-              <div class="flex items-center justify-between mb-2">
-                <p class="text-xs uppercase tracking-widest text-slate-500">Sesi hari ini</p>
-                <span class="chip-accent">
-                  <span class="glow-dot" />
-                  Live
-                </span>
-              </div>
-              <p class="font-display text-lg font-bold text-white">HIIT Burn · 17:30</p>
-              <div class="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div class="h-full w-3/4 rounded-full bg-gradient-to-r from-brand-400 to-accent-400" />
-              </div>
-              <p class="mt-2 text-xs text-slate-500">15 dari 20 slot terisi</p>
-            </div>
+          <div class="relative aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 bg-ink-950 shadow-[0_30px_80px_-30px_rgba(34,211,238,0.45)]">
+            <img
+              src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80"
+              alt="Member Heyfit sedang latihan"
+              class="absolute inset-0 h-full w-full object-cover"
+            >
           </div>
         </div>
       </div>
